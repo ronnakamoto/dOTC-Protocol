@@ -23,6 +23,11 @@ export default function ListSafts() {
   }, [address, isConnected]);
   return (
     <div className="container">
+      <div className="flex justify-end m-4">
+        <Link className="btn btn-sm btn-primary" href={"/vc/create-saft"}>
+          Create SAFT
+        </Link>
+      </div>
       <div className="overflow-x-auto m-4">
         <table className="table">
           <thead>
@@ -48,7 +53,7 @@ export default function ListSafts() {
                     <td>{0}</td>
                     <td>
                       <Link className="btn btn-xs btn-primary" href={`/vc/${saft.contractAddress}/add-members`}>
-                        Manage
+                        Manage Members
                       </Link>
                     </td>
                   </tr>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { useAccount } from "wagmi";
+import { notification } from "~~/utils/scaffold-eth";
 
 const CreateSaft = () => {
   const [formData, setFormData] = useState({
@@ -34,11 +35,17 @@ const CreateSaft = () => {
         symbol: "o" + formData.projectSymbol,
         amountRaised: formData.amountRaised,
       });
-
-      alert(response.data.message);
+      setFormData({
+        projectName: "",
+        projectSymbol: "",
+        amountRaised: 0,
+        pricePerToken: 0,
+        saftDetails: "",
+      });
+      notification.success("SAFT-Backed Token for project created successfully");
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to create token.");
+      notification.error("Failed to create token.");
     } finally {
       setLoading(false);
     }
@@ -104,8 +111,8 @@ const CreateSaft = () => {
             )}
           </div>
           <div className="flex justify-end">
-            <button type="submit" className={`btn btn-primary btn-sm ${loading ? "loading" : ""}`}>
-              Create OTC Token
+            <button type="submit" className={`btn btn-primary btn-sm ${loading ? "loading loading-spinner" : ""}`}>
+              {loading ? "Creating SAFT-Backed Token ..." : "Create SAFT-Backed Token"}
             </button>
           </div>
         </form>

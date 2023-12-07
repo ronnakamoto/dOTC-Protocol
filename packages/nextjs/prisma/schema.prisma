@@ -18,6 +18,7 @@ model User {
   whitelists Whitelist[]
   createdAt  DateTime?   @default(now())
   updatedAt  DateTime?   @updatedAt
+  Token      Token[]
 }
 
 model Project {
@@ -27,9 +28,11 @@ model Project {
   amountRaised    Float
   pricePerToken   Float
   saftDetails     String?
+  saftMerkleRoot  String?
   contractAddress String?
   symbol          String
   transactionHash String?
+  csvCid          String?
   chainId         Int?
   tokens          Token[]
   createdBy       User        @relation(fields: [userId], references: [id])
@@ -42,11 +45,19 @@ model Project {
 model Token {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   projectId       String   @db.ObjectId
+  contractAddress String
+  walletAddress   String
   tokenId         Int
-  transactionHash String
+  transactionHash String?
+  chainId         Int
+  amount          Float?
+  mintedBy        User     @relation(fields: [userId], references: [id])
+  userId          String   @db.ObjectId
   project         Project  @relation(fields: [projectId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@unique([projectId, tokenId])
 }
 
 model Whitelist {
@@ -54,6 +65,7 @@ model Whitelist {
   project           Project  @relation(fields: [projectId], references: [id])
   projectId         String   @db.ObjectId
   userWalletAddress String
+  amount            Float
   attributes        Json? // Additional attributes for whitelisting criteria
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
