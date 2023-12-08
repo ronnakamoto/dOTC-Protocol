@@ -1,26 +1,26 @@
 // pages/upload.tsx
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import axios from "axios";
-import * as fs from "fs";
 import path from "path";
-import { useContractWrite } from "wagmi";
-
-let abiPath = "../../artifacts/contracts/SAFTToken.sol/SAFTToken.json";
-abiPath = path.resolve(__dirname, abiPath);
-console.log("🚀 ~ file: add-members-1.tsx:10 ~ abiPath:", abiPath);
-// console.log("🚀 ~ file: add-members-1.tsx:10 ~ abiData:", abiData);
+import { TransactionReceipt } from "viem";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
+import { TxReceipt } from "~~/components/scaffold-eth";
+import { notification } from "~~/utils/scaffold-eth";
 
 const UploadPage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploadData, setUploadData] = useState<any[]>([]);
   const [merkleRoot, setMerkleRoot] = useState<string>("");
+  const [ipfsUrl, setIpfsUrl] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [onConfirmLoading, setOnConfirmLoading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [contractAbi, setContractAbi] = useState({} as any);
+  const [displayedTxResult, setDisplayedTxResult] = useState<TransactionReceipt>();
   const router = useRouter();
   const { contractAddress } = router.query;
-  console.log("🚀 ~ file: add-members.tsx:23 ~ UploadPage ~ contractAddress:", contractAddress);
 
   useEffect(() => {
     fetch("/api/abi")
@@ -33,18 +33,23 @@ const UploadPage = () => {
       .catch(err => console.log(err));
   }, []);
 
-  const {
-    writeAsync: callSetMerkleRoot,
-    isSuccess,
-    data,
-  } = useContractWrite({
-    address: contractAddress,
+  const { writeAsync: callSetMerkleRoot, data: writeResult } = useContractWrite({
+    address: contractAddress as string,
     functionName: "setMerkleRoot",
     abi: contractAbi?.abi,
     onSuccess: (data: any) => {
+      setOnConfirmLoading(false);
       console.log("Transaction data", data);
+      notification.success(`Transaction to whitelist members is successful`);
     },
   });
+
+  const { data: txResult } = useWaitForTransaction({
+    hash: writeResult?.hash,
+  });
+  useEffect(() => {
+    setDisplayedTxResult(txResult);
+  }, [txResult]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -54,10 +59,11 @@ const UploadPage = () => {
   };
 
   const handleUpload = async () => {
-    if (file) {
+    if (file && router.isReady) {
       setLoading(true);
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("contractAddress", contractAddress as string);
 
       try {
         const response = await axios.post("/api/upload", formData, {
@@ -71,6 +77,7 @@ const UploadPage = () => {
         });
         setUploadData(response.data.data);
         setMerkleRoot(response.data.merkleRoot);
+        setIpfsUrl(response.data.url);
       } catch (error) {
         console.error("Error uploading file:", error);
       }
@@ -85,7 +92,10 @@ const UploadPage = () => {
     //   whitelisted: true,
     // };
     // call setMerkleRoot method on-chain
-    callSetMerkleRoot({ args: [merkleRoot] });
+    if (merkleRoot) {
+      setOnConfirmLoading(true);
+      callSetMerkleRoot({ args: [merkleRoot] });
+    }
   };
 
   return (
@@ -104,7 +114,7 @@ const UploadPage = () => {
             {file && (
               <div className="w-1/2 bg-gray-200 rounded-full h-4 overflow-hidden">
                 <div
-                  className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-l-full h-4"
+                  className="bg-secondary text-xs font-medium text-primary-content text-center p-0.5 leading-none rounded-l-full h-4"
                   style={{ width: `${uploadProgress}%` }}
                 >
                   {" "}
@@ -123,6 +133,15 @@ const UploadPage = () => {
           </div>
         </div>
       </div>
+      {loading && (
+        <div className="card bg-base-100 shadow-xl mt-4">
+          <div className="card-body flex justify-center">
+            <div>The file is being processed and saved to IPFS ...</div>
+            <div>You will receive the link to the file along with the merkle root hash soon ...</div>
+            <progress className="progress w-56"></progress>
+          </div>
+        </div>
+      )}
 
       {uploadData.length > 0 && (
         <div className="card bg-base-100 shadow-xl mt-4">
@@ -146,17 +165,38 @@ const UploadPage = () => {
                 </tbody>
               </table>
             </div>
-            <div className="flex justify-end">
-              <div className="columns-2">
-                <h3 className="text-lg">Merkle Root</h3>
-                <p className="bg-gray-100 p-2 rounded">{merkleRoot}</p>
+            <div className="flex p-4 pb-1">
+              <div className="flex p-2 w-full justify-between font-mono">
+                <div className="font-semibold">Merkle Root</div>
+                <div className="bg-secondary p-2">{merkleRoot}</div>
               </div>
             </div>
+            <div className="flex p-4 pt-1">
+              <div className="flex p-2 w-full justify-between font-mono">
+                <div className="font-semibold">IPFS Url</div>
+                <Link href={ipfsUrl} target="_blank" className="bg-secondary p-2">
+                  {ipfsUrl}
+                </Link>
+              </div>
+            </div>
+            {displayedTxResult ? (
+              <div className="flex-grow basis-0">
+                <TxReceipt txResult={displayedTxResult} />
+              </div>
+            ) : null}
             <div className="flex justify-end">
-              {isSuccess && <div>Transaction: {JSON.stringify(data)}</div>}
-              <button className="btn btn-sm btn-primary" onClick={onConfirmedWhitelist}>
-                Confirm Whitelisted Investors
-              </button>
+              {!txResult ? (
+                <button className={`btn btn-sm btn-primary`} onClick={onConfirmedWhitelist}>
+                  {onConfirmLoading && <span className="loading loading-spinner"></span>}
+                  {onConfirmLoading && !txResult
+                    ? "Confirming Whitelist On-chain ..."
+                    : "Confirm Whitelisted Investors"}
+                </button>
+              ) : (
+                <Link href={`/vc/${contractAddress}/claim`} className="btn btn-sm btn-primary">
+                  Share Token Claim Link For Members/Investors
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -18,8 +18,13 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/",
   },
   {
-    label: "Debug Contracts",
-    href: "/debug",
+    label: "Manage SAFTs",
+    href: "/vc/list-saft",
+    icon: <BugAntIcon className="h-4 w-4" />,
+  },
+  {
+    label: "Trade",
+    href: "/trade",
     icon: <BugAntIcon className="h-4 w-4" />,
   },
 ];

@@ -21,7 +21,6 @@ contract SAFTToken is ERC1155, Ownable {
 	}
 
 	function mint(
-		address account,
 		uint256 amount,
 		bytes memory data,
 		bytes32[] calldata merkleProof
@@ -30,29 +29,21 @@ contract SAFTToken is ERC1155, Ownable {
 		require(!lockingFlags[id], "Token is currently locked for minting");
 
 		// Validate merkle proof using a single call
-		require(
-			MerkleProof.verifyCalldata(
-				merkleProof,
-				merkleRoot,
-				keccak256(abi.encodePacked(account, amount))
-			),
-			"Caller is not whitelisted"
-		);
+		require(isWhitelisted(merkleProof), "Caller is not whitelisted");
 
 		lockingFlags[id] = true; // Set locking flag to prevent duplicate mints
 
 		// Minimize external function calls for gas efficiency
-		_mint(account, id, amount, data);
+		_mint(msg.sender, id, amount, data);
 
 		lockingFlags[id] = false; // Unlock after successful minting
 		tokenIdCounter++;
 	}
 
 	function isWhitelisted(
-		address account,
 		bytes32[] calldata merkleProof
 	) public view returns (bool) {
-		bytes32 leaf = keccak256(abi.encodePacked(account));
+		bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
 		return MerkleProof.verify(merkleProof, merkleRoot, leaf);
 	}
 
