@@ -404,3 +404,36 @@ export async function getAllDeposits({ walletAddress }: any) {
     },
   });
 }
+
+export async function fetchOrdersFromMempool() {
+  try {
+    const mempoolOrders = await prisma.order.findMany({
+      where: {
+        mempool: true,
+      },
+    });
+    return mempoolOrders;
+  } catch (error) {
+    console.error("Error fetching orders from mempool:", error);
+    throw error;
+  }
+}
+
+export async function registerBundler({ registrationId, requestId }: any) {
+  try {
+    const bundler = await prisma.orderBundler.upsert({
+      where: {
+        registrationId,
+      },
+      update: {},
+      create: {
+        registrationId,
+        requestId,
+      },
+    });
+    return bundler;
+  } catch (error) {
+    console.error("Error registering bundler:", error);
+    throw error;
+  }
+}

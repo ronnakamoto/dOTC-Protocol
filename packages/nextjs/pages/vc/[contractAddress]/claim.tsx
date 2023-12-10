@@ -3,15 +3,10 @@ import { useRouter } from "next/router";
 import { ethers } from "ethers";
 import MerkleTree from "merkletreejs";
 import { keccak256 } from "viem";
-import {
-  useAccount,
-  useContractEvent,
-  useContractRead,
-  useContractWrite,
-  useNetwork,
-  useWaitForTransaction,
-} from "wagmi";
+import { useAccount, useContractWrite, useNetwork, useWaitForTransaction } from "wagmi";
 import { notification } from "~~/utils/scaffold-eth";
+
+// https://testnet.snowtrace.io/nft/${contractAddress}/${tokenId}?chainId=43113
 
 export default function ClaimOTCTokens() {
   const router = useRouter();

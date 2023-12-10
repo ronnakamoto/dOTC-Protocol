@@ -38,3 +38,7 @@ yarn-error.log*
 *.tsbuildinfo
 
 .env
+
+/utils/source.js
+/utils/request.js
+/utils/functionsClient.json
