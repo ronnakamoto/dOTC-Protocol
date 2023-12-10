@@ -2277,12 +2277,15 @@ __metadata:
     "@prisma/client": ^5.6.0
     "@rainbow-me/rainbowkit": 1.1.2
     "@trivago/prettier-plugin-sort-imports": ^4.1.1
+    "@types/formidable": ^3
     "@types/node": ^17.0.35
+    "@types/papaparse": ^5
     "@types/react": ^18.0.9
     "@types/react-copy-to-clipboard": ^5.0.4
     "@typescript-eslint/eslint-plugin": ^5.39.0
     "@uniswap/sdk-core": ^4.0.1
     "@uniswap/v2-sdk": ^3.0.1
+    "@web3-storage/w3up-client": ^11.2.1
     autoprefixer: ^10.4.12
     blo: ^1.0.1
     daisyui: ^3.5.1
@@ -2290,9 +2293,13 @@ __metadata:
     eslint-config-next: ^13.1.6
     eslint-config-prettier: ^8.5.0
     eslint-plugin-prettier: ^4.2.1
+    files-from-path: ^1.0.4
+    formidable: ^3.5.1
     keccak256: ^1.0.6
+    merkletreejs: ^0.3.11
     next: ^13.1.6
     nextjs-progressbar: ^0.0.16
+    papaparse: ^5.4.1
     postcss: ^8.4.16
     prettier: ^2.8.4
     prisma: ^5.6.0
@@ -4327,6 +4334,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@web3-storage/access@npm:^18.0.5":
+  version: 18.0.6
+  resolution: "@web3-storage/access@npm:18.0.6"
+  dependencies:
+    "@ipld/car": ^5.1.1
+    "@ipld/dag-ucan": ^3.4.0
+    "@scure/bip39": ^1.2.1
+    "@ucanto/client": ^9.0.0
+    "@ucanto/core": ^9.0.1
+    "@ucanto/interface": ^9.0.0
+    "@ucanto/principal": ^9.0.0
+    "@ucanto/transport": ^9.0.0
+    "@ucanto/validator": ^9.0.1
+    "@web3-storage/capabilities": ^13.0.0
+    "@web3-storage/did-mailto": ^2.1.0
+    bigint-mod-arith: ^3.1.2
+    conf: 11.0.2
+    multiformats: ^12.1.2
+    one-webcrypto: "git+https://github.com/web3-storage/one-webcrypto.git"
+    p-defer: ^4.0.0
+    type-fest: ^3.3.0
+    uint8arrays: ^4.0.6
+  checksum: c0e46dd461d58736ca4f3503925eb58a525b0b30a1233c7d094a6732ca377ccfd4f53c8bd43aaff153632070674f643ce362f0b9d3f7e5068b35876b3ef75bf3
+  languageName: node
+  linkType: hard
+
 "@web3-storage/capabilities@npm:^12.0.1, @web3-storage/capabilities@npm:^12.0.2":
   version: 12.0.2
   resolution: "@web3-storage/capabilities@npm:12.0.2"
@@ -4338,6 +4371,34 @@ __metadata:
     "@ucanto/validator": ^9.0.1
     "@web3-storage/data-segment": ^3.2.0
   checksum: 0532f2df020ebd4e9b459fe9460122e57ad2f3a47b12efd3747eabf284dc9f4e6befdce85705e539c50b19e0f48bc0c96f642bc250336e86a1d67064c7443054
+  languageName: node
+  linkType: hard
+
+"@web3-storage/capabilities@npm:^12.1.0":
+  version: 12.1.0
+  resolution: "@web3-storage/capabilities@npm:12.1.0"
+  dependencies:
+    "@ucanto/core": ^9.0.1
+    "@ucanto/interface": ^9.0.0
+    "@ucanto/principal": ^9.0.0
+    "@ucanto/transport": ^9.0.0
+    "@ucanto/validator": ^9.0.1
+    "@web3-storage/data-segment": ^3.2.0
+  checksum: ee5578665e71a4d037c85603021c800d3eca74aa6df5a2d257e8a6d254f21d503fc59f86b07801d51404d54325852e27f92facba3273dbdca764877a1762e66c
+  languageName: node
+  linkType: hard
+
+"@web3-storage/capabilities@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "@web3-storage/capabilities@npm:13.0.0"
+  dependencies:
+    "@ucanto/core": ^9.0.1
+    "@ucanto/interface": ^9.0.0
+    "@ucanto/principal": ^9.0.0
+    "@ucanto/transport": ^9.0.0
+    "@ucanto/validator": ^9.0.1
+    "@web3-storage/data-segment": ^3.2.0
+  checksum: 6754c304040588f687e0972b3cdd78a384e31cc7375410b6d03fa68f02ae7e23582c43f6341bec523b92d7f60e4ea802fce71fe27551ba05ba058a6427f26bf7
   languageName: node
   linkType: hard
 
@@ -4373,6 +4434,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@web3-storage/filecoin-client@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "@web3-storage/filecoin-client@npm:3.2.0"
+  dependencies:
+    "@ipld/dag-ucan": ^3.4.0
+    "@ucanto/client": ^9.0.0
+    "@ucanto/core": ^9.0.1
+    "@ucanto/interface": ^9.0.0
+    "@ucanto/transport": ^9.0.0
+    "@web3-storage/capabilities": ^12.1.0
+  checksum: 7d6f4a34ad4a12404e6083f13b42e020d5287f6f250914d57e0f22a06f1462c268b76626c04b27a3749b52b681964a671409437c0405ab9deca8c68ce425164c
+  languageName: node
+  linkType: hard
+
 "@web3-storage/upload-client@npm:^12.0.1":
   version: 12.0.1
   resolution: "@web3-storage/upload-client@npm:12.0.1"
@@ -4395,6 +4470,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@web3-storage/upload-client@npm:^12.3.2":
+  version: 12.3.2
+  resolution: "@web3-storage/upload-client@npm:12.3.2"
+  dependencies:
+    "@ipld/car": ^5.2.2
+    "@ipld/dag-cbor": ^9.0.6
+    "@ipld/dag-ucan": ^3.4.0
+    "@ipld/unixfs": ^2.1.1
+    "@ucanto/client": ^9.0.0
+    "@ucanto/interface": ^9.0.0
+    "@ucanto/transport": ^9.0.0
+    "@web3-storage/capabilities": ^12.1.0
+    fr32-sha2-256-trunc254-padded-binary-tree-multihash: ^3.1.1
+    ipfs-utils: ^9.0.14
+    multiformats: ^12.1.2
+    p-retry: ^5.1.2
+    parallel-transform-web: ^1.0.1
+    varint: ^6.0.0
+  checksum: 6b5cca321d777d7d836f47eaa5344c0f9721276f392f6b43698066bceed1990019b0996d0eb87f5d65b8c6abb069bd9cf9176a9adc07de097a433572c9ee8d12
+  languageName: node
+  linkType: hard
+
 "@web3-storage/w3up-client@npm:^11.0.2":
   version: 11.0.2
   resolution: "@web3-storage/w3up-client@npm:11.0.2"
@@ -4411,6 +4508,25 @@ __metadata:
     "@web3-storage/filecoin-client": ^3.1.2
     "@web3-storage/upload-client": ^12.0.1
   checksum: b8bcf90df9903a9b0d07e471dfa032e83967e4a3339563c9d58873d5eb288f02811f42f03d51a3024b6793b240eabeb1ce0425c080e8e278727657c6d0e29f01
+  languageName: node
+  linkType: hard
+
+"@web3-storage/w3up-client@npm:^11.2.1":
+  version: 11.2.1
+  resolution: "@web3-storage/w3up-client@npm:11.2.1"
+  dependencies:
+    "@ipld/dag-ucan": ^3.4.0
+    "@ucanto/client": ^9.0.0
+    "@ucanto/core": ^9.0.1
+    "@ucanto/interface": ^9.0.0
+    "@ucanto/principal": ^9.0.0
+    "@ucanto/transport": ^9.0.0
+    "@web3-storage/access": ^18.0.5
+    "@web3-storage/capabilities": ^12.1.0
+    "@web3-storage/did-mailto": ^2.1.0
+    "@web3-storage/filecoin-client": ^3.2.0
+    "@web3-storage/upload-client": ^12.3.2
+  checksum: 220d6c8c142d54bde8ed27670ea6f6d29f73578a13a5c25dea3bdd524ba62a5cb98d8cee8a76d4d8d6f1579efafbeaacbb0e467c243555ca4bf25e8e80e0842a
   languageName: node
   linkType: hard
 
@@ -8257,6 +8373,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"files-from-path@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "files-from-path@npm:1.0.4"
+  dependencies:
+    graceful-fs: ^4.2.10
+  checksum: 30f1baa3dc2778a5c77e8c4caa2de36654bf2419cd25bda1809cbe10334230b3436b995829197b8bf7aa4ab90bb67d0f6a80ca23cb506ac08f4ad6dac76a5ad5
+  languageName: node
+  linkType: hard
+
 "fill-range@npm:^7.0.1":
   version: 7.0.1
   resolution: "fill-range@npm:7.0.1"
@@ -8454,6 +8579,13 @@ __metadata:
   version: 3.1.0
   resolution: "fr32-sha2-256-trunc254-padded-binary-tree-multihash@npm:3.1.0"
   checksum: 79901c23d78b050e39fd189a83f5fbc6a31a0caf71395b281352e25eb0efa5cccdf33cd0e792229fa8a543b943b7b1fc969d996e3a50f3c5a23410f3df031e43
+  languageName: node
+  linkType: hard
+
+"fr32-sha2-256-trunc254-padded-binary-tree-multihash@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "fr32-sha2-256-trunc254-padded-binary-tree-multihash@npm:3.1.1"
+  checksum: a685f90fb9ec4b4018796e6a280114d36bfb72b57b662e521328d6ca4dead4a48743d4d6c1c9c3afc8948ade13250f16d1d52baa56a6ba871f0287aca479807a
   languageName: node
   linkType: hard
 
@@ -12135,6 +12267,13 @@ __metadata:
   version: 1.0.0
   resolution: "parallel-transform-web@npm:1.0.0"
   checksum: 6a0aa5992778e6ea29b5f8353867bb2d39f13d470df7b53db177c5f67a069553cc5450c9f526c237ef64beaff2b652b4f54579482aa2ade10a6f6abdfb73f9cd
+  languageName: node
+  linkType: hard
+
+"parallel-transform-web@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "parallel-transform-web@npm:1.0.1"
+  checksum: 681c5e419e4eeb5ab49d23d835a7feaa968579bd7f6003b2b0ef6343865d19f10e3018d83363e46ed3f487c73fc1e7781156f96c836400ac7036c52550525016
   languageName: node
   linkType: hard
 
