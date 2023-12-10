@@ -13,7 +13,8 @@
     "vercel": "vercel",
     "vercel:yolo": "vercel --build-env NEXT_PUBLIC_IGNORE_BUILD_ERROR=true",
     "prisma:generate": "npx prisma generate",
-    "prisma:push": "npx prism db push"
+    "prisma:push": "npx prism db push",
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@chainlink/functions-toolkit": "^0.2.8",
