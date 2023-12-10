@@ -2184,6 +2184,7 @@ __metadata:
     react: ^18.2.0
     react-copy-to-clipboard: ^5.1.0
     react-dom: ^18.2.0
+    react-google-charts: ^4.0.1
     react-hot-toast: ^2.4.0
     tailwindcss: ^3.3.3
     type-fest: ^4.6.0
@@ -12419,6 +12420,16 @@ __metadata:
   peerDependencies:
     react: ^18.2.0
   checksum: 7d323310bea3a91be2965f9468d552f201b1c27891e45ddc2d6b8f717680c95a75ae0bc1e3f5cf41472446a2589a75aed4483aee8169287909fcd59ad149e8cc
+  languageName: node
+  linkType: hard
+
+"react-google-charts@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "react-google-charts@npm:4.0.1"
+  peerDependencies:
+    react: ">=16.3.0"
+    react-dom: ">=16.3.0"
+  checksum: 874a552b07cc67d6b830718dd5e71055c46fbd0c7a12bca14078c0744111d8fead833e36a16bd0b0ea5c26f6cff0eb84b4b6de62845c945b3c47c6cc75233f9d
   languageName: node
   linkType: hard
 
