@@ -20,6 +20,7 @@ model User {
   updatedAt  DateTime?   @updatedAt
   Token      Token[]
   Order      Order[]
+  Wallet     Wallet[]
 }
 
 model Project {
@@ -112,4 +113,28 @@ model Trade {
   project     Project  @relation(fields: [projectId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum WalletTxnStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum WalletTxnType {
+  DEPOSIT
+  WITHDRAWAL
+}
+
+model Wallet {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  contractAddress String
+  userId          String          @db.ObjectId
+  user            User            @relation(fields: [userId], references: [id])
+  amount          Float
+  transactionHash String          @unique
+  status          WalletTxnStatus
+  transactionType WalletTxnType
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }

@@ -1,5 +1,5 @@
 import prisma from "../../prisma/prisma";
-import { OrderStatus, OrderType, Prisma } from "@prisma/client";
+import { OrderStatus, OrderType, Prisma, WalletTxnStatus, WalletTxnType } from "@prisma/client";
 
 export async function createUser({ wallet }: Prisma.UserUncheckedCreateInput) {
   const user = await prisma.user.upsert({
@@ -344,6 +344,63 @@ export async function getOpenSellOrders(contractAddress: string): Promise<any[]>
       project: {
         contractAddress: contractAddress,
       },
+    },
+  });
+}
+
+export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash }: any) {
+  const user = await prisma.user.findUnique({
+    where: {
+      wallet: walletAddress,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return await prisma.wallet.create({
+    data: {
+      contractAddress,
+      userId: user.id,
+      amount,
+      transactionHash,
+      status: WalletTxnStatus.PENDING,
+      transactionType: WalletTxnType.DEPOSIT,
+    },
+  });
+}
+
+export async function finalizeDeposit({ transactionHash }: any) {
+  console.log("🚀 ~ file: index.ts:375 ~ finalizeDeposit ~ transactionHash:", transactionHash);
+  try {
+    return await prisma.wallet.update({
+      where: {
+        transactionHash,
+      },
+      data: {
+        status: WalletTxnStatus.PROCESSED,
+      },
+    });
+  } catch (error) {
+    console.error("Error in finalizeDeposit:", error);
+    throw error; // or handle it as appropriate
+  }
+}
+
+export async function getAllDeposits({ walletAddress }: any) {
+  const user = await prisma.user.findUnique({
+    where: {
+      wallet: walletAddress,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return await prisma.wallet.findMany({
+    where: {
+      userId: user.id,
     },
   });
 }
