@@ -11,10 +11,15 @@ const OrderBook = ({ buyOrders, sellOrders }: any) => {
             </tr>
           </thead>
           <tbody>
+            {!buyOrders?.length && (
+              <tr className="flex justify-center">
+                <td>No buy orders yet</td>
+              </tr>
+            )}
             {buyOrders.map(order => (
               <tr key={order.id} className="bg-green-200">
                 <td>{order.price}</td>
-                <td>{order.quantity}</td>
+                <td>{order.amount}</td>
               </tr>
             ))}
           </tbody>
@@ -30,10 +35,15 @@ const OrderBook = ({ buyOrders, sellOrders }: any) => {
             </tr>
           </thead>
           <tbody>
+            {!sellOrders?.length && (
+              <tr className="flex justify-center">
+                <td>No sell orders yet</td>
+              </tr>
+            )}
             {sellOrders.map(order => (
               <tr key={order.id} className="bg-red-200">
                 <td>{order.price}</td>
-                <td>{order.quantity}</td>
+                <td>{order.amount}</td>
               </tr>
             ))}
           </tbody>

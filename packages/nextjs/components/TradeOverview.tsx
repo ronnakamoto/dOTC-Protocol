@@ -7,7 +7,7 @@ const Card = ({ volume, price, marketCap }: any) => {
       </div>
       <div className="mb-4">
         <h3 className="text-primary font-bold font-mono">Current Price</h3>
-        <p className="text-gray-900 leading-none font-mono">{price}</p>
+        <p className="text-gray-900 leading-none font-mono">${price}</p>
       </div>
       <div className="mb-4">
         <h3 className="text-primary font-bold font-mono">Market Cap</h3>

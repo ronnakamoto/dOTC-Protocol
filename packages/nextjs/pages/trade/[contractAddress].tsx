@@ -1,22 +1,96 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useAccount } from "wagmi";
 import CandlestickChartComponent from "~~/components/CandlestickChart";
 import OrderBook from "~~/components/OrderBook";
 import OrderPlacement from "~~/components/OrderPlacement";
 import TradeOverview from "~~/components/TradeOverview";
+import { notification } from "~~/utils/scaffold-eth";
 
-const buyOrders = [
-  { id: 1, price: 100, quantity: 10 },
-  { id: 2, price: 90, quantity: 5 },
-];
+function groupOrdersByPrice(orders) {
+  const groupedOrders = {};
 
-const sellOrders = [
-  { id: 3, price: 110, quantity: 7 },
-  { id: 4, price: 120, quantity: 3 },
-];
+  // Aggregate orders by price
+  orders.forEach(order => {
+    if (groupedOrders.hasOwnProperty(order.price)) {
+      groupedOrders[order.price] += order.amount;
+    } else {
+      groupedOrders[order.price] = order.amount;
+    }
+  });
+
+  // Convert the aggregated data into an array of objects
+  return Object.keys(groupedOrders).map(price => {
+    return {
+      price: parseFloat(price),
+      amount: groupedOrders[price],
+    };
+  });
+}
 
 export default function TradingTerminal() {
+  const { address } = useAccount();
   const [orderType, setOrderType] = useState("BUY");
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [availableStableBalance, setAvailableStableBalance] = useState(0);
+  const [refreshBalance, setRefreshBalance] = useState(false);
+  const router = useRouter();
+  const [buyOrders, setBuyOrders] = useState([]);
+  const [sellOrders, setSellOrders] = useState([]);
+  const [currentPrice, setCurrentPrice] = useState(0);
+
+  const onOrderPlaced = (data: any) => {
+    console.log("🚀 ~ file: [contractAddress].tsx:27 ~ onOrderPlaced ~ data:", data);
+    notification.success("Order has been placed");
+    setRefreshBalance(true);
+  };
+
+  useEffect(() => {
+    if (router.query.contractAddress) {
+      fetch(`/api/trade/${router.query.contractAddress}/market-price`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("🚀 ~ file: index.tsx:28 ~ useEffect ~ data:", data);
+          setCurrentPrice(data);
+        });
+    }
+  }, [router.query.contractAddress]);
+
+  useEffect(() => {
+    if (router.query.contractAddress && address) {
+      fetch(`/api/balance?walletAddress=${address}&contractAddress=${router.query.contractAddress}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("🚀 ~ file: index.tsx:28 ~ useEffect ~ balance:", data);
+          setAvailableBalance(data);
+          setRefreshBalance(false);
+        });
+    }
+  }, [router.query.contractAddress, address, refreshBalance]);
+
+  useEffect(() => {
+    if (router.query.contractAddress) {
+      fetch(`/api/trade/orders?contractAddress=${router.query.contractAddress}&orderType=BUY`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("🚀 ~ file: index.tsx:28 ~ useEffect ~ balance:", data);
+          setBuyOrders(data);
+        });
+    }
+  }, [router.query.contractAddress]);
+
+  useEffect(() => {
+    if (router.query.contractAddress) {
+      fetch(`/api/trade/orders?contractAddress=${router.query.contractAddress}&orderType=SELL`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("🚀 ~ file: index.tsx:28 ~ useEffect ~ balance:", data);
+          const orders = groupOrdersByPrice(data);
+          setSellOrders(orders);
+        });
+    }
+  }, [router.query.contractAddress]);
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-2 flex w-full border border-primary">
@@ -24,7 +98,7 @@ export default function TradingTerminal() {
           <CandlestickChartComponent />
         </div>
         <div className="flex-grow">
-          <TradeOverview volume="1.23M" price="$1234.56" marketCap="$1.23B" />
+          <TradeOverview volume="1.23M" price={currentPrice} marketCap="$1.23B" />
         </div>
       </div>
       <div className="flex">
@@ -50,7 +124,14 @@ export default function TradingTerminal() {
               Sell
             </a>
           </div>
-          <OrderPlacement orderType={orderType} availableBalance={availableBalance} />
+          <OrderPlacement
+            orderType={orderType}
+            availableBalance={availableBalance}
+            availableStableBalance={availableStableBalance}
+            walletAddress={address}
+            contractAddress={router.query.contractAddress}
+            onOrderPlaced={onOrderPlaced}
+          />
         </div>
       </div>
     </div>
