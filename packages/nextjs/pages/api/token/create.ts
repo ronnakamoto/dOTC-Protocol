@@ -4,7 +4,7 @@ import path from "path";
 import { createProject, createUser } from "~~/services/db";
 
 // Adjust the paths according to your project structure
-const artifactPath = path.join(process.cwd(), "../hardhat/artifacts/contracts/SAFTToken.sol/SAFTToken.json");
+const artifactPath = path.join(process.cwd(), "../nextjs/artifacts/contracts/SAFTToken.sol/SAFTToken.json");
 const SAFTToken = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
 
 export default async function handler(req, res) {

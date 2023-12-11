@@ -348,6 +348,29 @@ export async function getOpenSellOrders(contractAddress: string): Promise<any[]>
   });
 }
 
+export async function addSaftOTokenDeposit({ contractAddress, walletAddress, amount, transactionHash }: any) {
+  const user = await prisma.user.findUnique({
+    where: {
+      wallet: walletAddress,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return await prisma.wallet.create({
+    data: {
+      contractAddress,
+      userId: user.id,
+      amount,
+      transactionHash,
+      status: WalletTxnStatus.PROCESSED,
+      transactionType: WalletTxnType.DEPOSIT,
+    },
+  });
+}
+
 export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash }: any) {
   const user = await prisma.user.findUnique({
     where: {
@@ -372,7 +395,6 @@ export async function savePendingDeposit({ contractAddress, walletAddress, amoun
 }
 
 export async function finalizeDeposit({ transactionHash }: any) {
-  console.log("🚀 ~ file: index.ts:375 ~ finalizeDeposit ~ transactionHash:", transactionHash);
   try {
     return await prisma.wallet.update({
       where: {
