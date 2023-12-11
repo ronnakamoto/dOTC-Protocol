@@ -89,7 +89,7 @@ const CreateSaft = () => {
             className="input input-sm input-bordered w-full mb-4"
           />
           <input
-            type="number"
+            type="text"
             name="pricePerToken"
             placeholder="Price per Token"
             onChange={handleChange}
@@ -111,7 +111,8 @@ const CreateSaft = () => {
             )}
           </div>
           <div className="flex justify-end">
-            <button type="submit" className={`btn btn-primary btn-sm ${loading ? "loading loading-spinner" : ""}`}>
+            <button type="submit" className={`btn btn-primary btn-sm`}>
+              {loading && <span className="loading loading-spinner"></span>}
               {loading ? "Creating SAFT-Backed Token ..." : "Create SAFT-Backed Token"}
             </button>
           </div>
