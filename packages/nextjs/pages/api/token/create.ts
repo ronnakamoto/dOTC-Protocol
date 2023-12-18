@@ -1,11 +1,7 @@
-import { ethers } from "ethers";
-import fs from "fs";
-import path from "path";
-import { createProject, createUser } from "~~/services/db";
-
 // Adjust the paths according to your project structure
-const artifactPath = path.join(process.cwd(), "../nextjs/artifacts/contracts/SAFTToken.sol/SAFTToken.json");
-const SAFTToken = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
+import SAFTToken from "../../../public/artifacts/contracts/SAFTToken.sol/SAFTToken.json";
+import { ethers } from "ethers";
+import { createProject, createUser } from "~~/services/db";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -47,7 +43,7 @@ export default async function handler(req, res) {
       });
       console.log("🚀 ~ file: create.ts:45 ~ handler ~ projectCreated:", projectCreated);
 
-      res.status(200).json({
+      return res.status(200).json({
         data: {
           address: deployedContract.address,
           txHash: deployedContract.deployTransaction.hash,
@@ -57,11 +53,11 @@ export default async function handler(req, res) {
     } catch (error) {
       console.log("🚀 ~ file: create.ts:37 ~ handler ~ error:", error);
       // Handle errors
-      res.status(500).json({ error: "Internal Server Error" });
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   } else {
     // Handle non-POST requests
     res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

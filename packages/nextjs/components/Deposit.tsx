@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import TradingWalletABI from "../artifacts/contracts/TradingWallet.sol/TradingWallet.json";
-import USDTABI from "../artifacts/contracts/USDT.sol/USDT.json";
+import TradingWalletABI from "../public/artifacts/contracts/TradingWallet.sol/TradingWallet.json";
+import USDTABI from "../public/artifacts/contracts/USDT.sol/USDT.json";
 import { ethers } from "ethers";
 import { useAccount, useContractWrite, useWaitForTransaction } from "wagmi";
 import { useScaffoldContractRead } from "~~/hooks/scaffold-eth";

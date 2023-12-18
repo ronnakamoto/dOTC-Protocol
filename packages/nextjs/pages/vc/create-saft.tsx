@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import axios from "axios";
 import { useAccount } from "wagmi";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { notification } from "~~/utils/scaffold-eth";
 
 const CreateSaft = () => {
@@ -35,14 +37,19 @@ const CreateSaft = () => {
         symbol: "o" + formData.projectSymbol,
         amountRaised: formData.amountRaised,
       });
-      setFormData({
-        projectName: "",
-        projectSymbol: "",
-        amountRaised: 0,
-        pricePerToken: 0,
-        saftDetails: "",
-      });
-      notification.success("SAFT-Backed Token for project created successfully");
+      console.log("🚀 ~ file: create-saft.tsx:40 ~ handleSubmit ~ response:", response);
+
+      if (response?.data) {
+        console.log("🚀 ~ file: create-saft.tsx:41 ~ .then ~ data:", response?.data);
+        notification.success("SAFT-Backed Token for project created successfully");
+        setFormData({
+          projectName: "",
+          projectSymbol: "",
+          amountRaised: 0,
+          pricePerToken: 0,
+          saftDetails: "",
+        });
+      }
     } catch (error) {
       console.error("Error:", error);
       notification.error("Failed to create token.");
@@ -72,6 +79,7 @@ const CreateSaft = () => {
             name="projectName"
             placeholder="Project Name"
             onChange={handleChange}
+            value={formData.projectName}
             className="input input-sm input-bordered w-full mb-4"
           />
           <input
@@ -79,6 +87,7 @@ const CreateSaft = () => {
             name="projectSymbol"
             placeholder="Project Symbol/Ticker"
             onChange={handleChange}
+            value={formData.projectSymbol}
             className="input input-sm input-bordered w-full mb-4"
           />
           <input
@@ -86,6 +95,7 @@ const CreateSaft = () => {
             name="amountRaised"
             placeholder="Amount Raised (In USDT)"
             onChange={handleChange}
+            value={formData.amountRaised}
             className="input input-sm input-bordered w-full mb-4"
           />
           <input
@@ -93,12 +103,14 @@ const CreateSaft = () => {
             name="pricePerToken"
             placeholder="Price per Token"
             onChange={handleChange}
+            value={formData.pricePerToken}
             className="input input-sm input-bordered w-full mb-4"
           />
           <textarea
             name="saftDetails"
             placeholder="SAFT Details"
             onChange={handleChange}
+            value={formData.saftDetails}
             className="textarea textarea-sm textarea-bordered w-full mb-4"
           />
 
@@ -111,6 +123,10 @@ const CreateSaft = () => {
             )}
           </div>
           <div className="flex justify-end">
+            <Link href="/vc/list-saft" className={`btn btn-primary btn-sm mr-2`}>
+              <ArrowLeftIcon height={16} width={16} />
+              View All Projects
+            </Link>
             <button type="submit" className={`btn btn-primary btn-sm`}>
               {loading && <span className="loading loading-spinner"></span>}
               {loading ? "Creating SAFT-Backed Token ..." : "Create SAFT-Backed Token"}
