@@ -426,7 +426,7 @@ export async function createDealDeposit({ contractAddress, walletAddress, amount
   });
 }
 
-export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash }: any) {
+export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash, symbol }: any) {
   const user = await prisma.user.findUnique({
     where: {
       wallet: walletAddress,
@@ -445,6 +445,7 @@ export async function savePendingDeposit({ contractAddress, walletAddress, amoun
       transactionHash,
       status: WalletTxnStatus.PENDING,
       transactionType: WalletTxnType.DEPOSIT,
+      symbol,
     },
   });
 }
