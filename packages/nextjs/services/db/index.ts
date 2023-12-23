@@ -598,3 +598,51 @@ function updateHeapAfterTrade(heap, order, tradeAmount) {
 }
 
 // MATCHING ENGINE: END
+
+export async function getAssetStats(contractAddress: string) {
+  const project = await getProjectByContractAddress(contractAddress);
+  if (!project) {
+    throw new Error("Project not found");
+  }
+  const initialPrice = project.pricePerToken;
+
+  const latestTrade = await prisma.trade.findFirst({
+    where: {
+      projectId: project.id,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      price: true,
+    },
+  });
+
+  const currentPrice = latestTrade?.price ?? initialPrice;
+
+  // Get the sum of amounts from filled and partially filled BUY orders
+  const orders = await prisma.order.findMany({
+    where: {
+      AND: [
+        { projectId: project.id },
+        { type: "BUY" },
+        {
+          OR: [{ status: "FILLED" }, { status: "PARTIALLY_FILLED" }],
+        },
+      ],
+    },
+  });
+
+  // Calculate circulating supply
+  const circulatingSupply = orders.reduce((sum, order) => sum + order.amount, 0);
+
+  // Calculate market cap
+  const marketCap = circulatingSupply * currentPrice;
+
+  const fdv = (project?.totalSupply ?? 0) * currentPrice;
+
+  return {
+    marketCap,
+    fdv,
+  };
+}

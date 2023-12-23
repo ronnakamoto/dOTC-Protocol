@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import LoadingSpinner from "~~/components/LoadingIndicator";
 
 export default function TradingTerminalIndex() {
+  const [loading, setLoading] = useState(true);
   const { address } = useAccount();
   const [projects, setProjects] = useState([]);
 
@@ -12,9 +14,16 @@ export default function TradingTerminalIndex() {
         .then(res => res.json())
         .then(data => {
           setProjects(data);
+        })
+        .finally(() => {
+          setLoading(false);
         });
     }
   }, [address]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="container">
