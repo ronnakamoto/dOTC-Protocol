@@ -269,7 +269,6 @@ export async function getAvailableBalance(contractAddress: string, walletAddress
       amount: true,
     },
   });
-  console.log("🚀 ~ file: index.ts:239 ~ getAvailableBalance ~ initialBalance:", initialBalance);
 
   // Calculate the impact of buy orders (filled and partially filled)
   const buyOrdersSum = await prisma.order.aggregate({
@@ -308,14 +307,13 @@ export async function getAvailableBalance(contractAddress: string, walletAddress
       amount: true,
     },
   });
-  console.log("🚀 ~ file: index.ts:278 ~ getAvailableBalance ~ sellOrdersSum:", sellOrdersSum);
 
   // Calculate the available balance
   const availableBalance =
     (initialBalance?.amount ?? 0) + (buyOrdersSum._sum.amount ?? 0) - (sellOrdersSum._sum.amount ?? 0);
   console.log("🚀 ~ file: index.ts:280 ~ getAvailableBalance ~ availableBalance:", availableBalance);
 
-  return availableBalance;
+  return availableBalance > 0 ? availableBalance : 0;
 }
 
 export async function createSellOrder({ contractAddress, price, amount, walletAddress }: any) {
