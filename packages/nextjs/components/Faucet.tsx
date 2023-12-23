@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import mockUSDTABI from "../public/artifacts/contracts/USDT.sol/USDT.json";
 import { ethers } from "ethers";
 import { useAccount, useConnect, useContractWrite, useNetwork } from "wagmi";
+import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 
 // Path to your ABI file
 
@@ -11,11 +12,10 @@ const Faucet = ({ contractAddress }) => {
   const { connect } = useConnect();
   const { chain } = useNetwork();
 
-  const { writeAsync, isLoading } = useContractWrite({
-    address: contractAddress,
-    abi: mockUSDTABI.abi,
+  const { writeAsync, isLoading } = useScaffoldContractWrite({
+    contractName: "USDT",
     functionName: "mint",
-    args: [walletAddress, amount ? ethers.utils.parseUnits(amount, 18) : 0],
+    args: [walletAddress, amount ? BigInt(ethers.utils.parseUnits(amount, 18).toString()) : 0n],
   });
 
   const handleMint = () => {
@@ -24,7 +24,9 @@ const Faucet = ({ contractAddress }) => {
     } else if (chain?.unsupported) {
       alert("Please connect to a supported network");
     } else {
-      writeAsync?.();
+      writeAsync?.({
+        args: [walletAddress, amount ? BigInt(ethers.utils.parseUnits(amount, 18).toString()) : 0n],
+      });
     }
   };
 

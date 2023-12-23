@@ -7,15 +7,15 @@ import { useScaffoldContractRead } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
 const TRADING_WALLET_ADDRESS = "0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677";
-const USDT_CONTRACT_ADDRESS = "0x3D6D1F095a3F3c3bb889847d009c105D197D1735";
+const USDT_CONTRACT_ADDRESS = "0x184bc3968e47DDD10984940566FFbEC841C66510";
 
 const Deposit = () => {
   const { address: userAddress } = useAccount();
   const [amount, setAmount] = useState("0");
-  const [allowance, setAllowance] = useState("0");
+  const [allowance, setAllowance] = useState(0n);
   const [depositTxnHash, setDepositTxnHash] = useState("");
   const [deposits, setDeposits] = useState([]);
-  const [refreshDeposits, setRefreshDeposits] = useState(true);
+  const [refreshDeposits, setRefreshDeposits] = useState(false);
   const [depositStatus, setDepositStatus] = useState("");
 
   const { writeAsync: callDeposit, isLoading: isDepositLoading } = useContractWrite({
@@ -37,20 +37,22 @@ const Deposit = () => {
       })
         .then(response => response.json())
         .then(data => {
-          setRefreshDeposits(true);
           setDepositStatus("PENDING");
           console.log("🚀 ~ file: Deposit.tsx:82 ~ useEffect ~ data:", data);
           notification.info("Deposit is pending and is being processed");
         })
-        .catch(err => console.log(err));
-      // Reset the amount after deposit
-      setAmount("0");
-      setDepositTxnHash(data.hash);
+        .catch(err => console.log(err))
+        .finally(() => {
+          setRefreshDeposits(true);
+          // Reset the amount after deposit
+          setAmount("0");
+          setDepositTxnHash(data.hash);
+        });
     },
   });
 
   const { writeAsync: callApprove, isLoading: isApproveLoading } = useContractWrite({
-    address: "0x3D6D1F095a3F3c3bb889847d009c105D197D1735",
+    address: USDT_CONTRACT_ADDRESS,
     functionName: "approve",
     abi: USDTABI?.abi,
     onSuccess: (data: any) => {
@@ -62,10 +64,11 @@ const Deposit = () => {
   const { data: allowanceData } = useScaffoldContractRead({
     contractName: "USDT",
     functionName: "allowance",
-    args: [userAddress, "0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677"],
+    args: [userAddress, TRADING_WALLET_ADDRESS],
   });
 
   useEffect(() => {
+    console.log("Fetched allowance data...", allowanceData);
     if (allowanceData) {
       console.log("🚀 ~ file: Deposit.tsx:42 ~ useEffect ~ allowanceData:", allowanceData);
       setAllowance(allowanceData);
@@ -125,16 +128,16 @@ const Deposit = () => {
   const handleDeposit = () => {
     // Logic to interact with the TradingWallet contract
     console.log(`Depositing ${amount}`);
-    callDeposit({ args: ["0x3D6D1F095a3F3c3bb889847d009c105D197D1735", ethers.utils.parseUnits(amount, 18)] });
+    callDeposit({ args: [USDT_CONTRACT_ADDRESS, ethers.utils.parseUnits(amount, 18)] });
   };
 
   const handleApprove = () => {
     console.log(`Approving ${amount}`);
-    callApprove({ args: ["0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677", ethers.utils.parseUnits(amount, 18)] });
+    callApprove({ args: [TRADING_WALLET_ADDRESS, ethers.utils.parseUnits(amount, 18)] });
   };
 
   useEffect(() => {
-    if (refreshDeposits && userAddress) {
+    if (userAddress) {
       fetch(`/api/wallet/all-deposits?walletAddress=${userAddress}`)
         .then(response => response.json())
         .then(data => {
@@ -206,7 +209,11 @@ const Deposit = () => {
                   </tr>
                 ))
               ) : (
-                <tr className="flex w-full text-center justify-center">No Deposits ...</tr>
+                <tr className="flex-1 w-full justify-center">
+                  <td className="text-center p-4" colSpan={100}>
+                    No Deposits ...
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
