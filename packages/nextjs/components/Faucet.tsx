@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import mockUSDTABI from "../artifacts/contracts/USDT.sol/USDT.json";
+import mockUSDTABI from "../public/artifacts/contracts/USDT.sol/USDT.json";
 import { ethers } from "ethers";
-import { useAccount, useConnect, useContractWrite, useNetwork, usePrepareContractWrite } from "wagmi";
+import { useAccount, useConnect, useContractWrite, useNetwork } from "wagmi";
 
 // Path to your ABI file
 

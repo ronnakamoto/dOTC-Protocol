@@ -23,8 +23,36 @@ model User {
   Wallet     Wallet[]
 }
 
+enum DealViewType {
+  PUBLIC
+  WHITELIST
+}
+
+enum OfferType {
+  SAFT
+  SAFE
+  TOKEN_WARRANT
+}
+
+enum TradeType {
+  NORMAL
+  LOT
+}
+
+type DealProperties {
+  viewType  DealViewType @default(PUBLIC)
+  offerType OfferType?
+  tradeType TradeType?   @default(NORMAL)
+}
+
+enum DealStatus {
+  ACTIVE
+  ARCHIVED
+  CANCELLED
+}
+
 model Project {
-  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
   name            String
   totalSupply     Float?
   amountRaised    Float
@@ -36,11 +64,13 @@ model Project {
   transactionHash String?
   csvCid          String?
   chainId         Int?
+  properties      DealProperties
+  status          DealStatus     @default(ACTIVE)
   tokens          Token[]
-  createdBy       User        @relation(fields: [userId], references: [id])
-  userId          String      @db.ObjectId
-  createdAt       DateTime?   @default(now())
-  updatedAt       DateTime?   @updatedAt
+  createdBy       User           @relation(fields: [userId], references: [id])
+  userId          String         @db.ObjectId
+  createdAt       DateTime?      @default(now())
+  updatedAt       DateTime?      @updatedAt
   Whitelist       Whitelist[]
   Trade           Trade[]
   Order           Order[]
@@ -132,6 +162,7 @@ enum WalletTxnType {
 model Wallet {
   id              String          @id @default(auto()) @map("_id") @db.ObjectId
   contractAddress String
+  symbol          String
   userId          String          @db.ObjectId
   user            User            @relation(fields: [userId], references: [id])
   amount          Float

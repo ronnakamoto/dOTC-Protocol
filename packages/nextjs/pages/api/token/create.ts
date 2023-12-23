@@ -1,13 +1,14 @@
 // Adjust the paths according to your project structure
 import SAFTToken from "../../../public/artifacts/contracts/SAFTToken.sol/SAFTToken.json";
 import { ethers } from "ethers";
-import { createProject, createUser } from "~~/services/db";
+import { zeroAddress } from "viem";
+import { createDealDeposit, createProject, createSellOrder, createUser } from "~~/services/db";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
     try {
       // Extract token data from the request body
-      const { tokenName, totalSupply, owner, pricePerToken, symbol, saftDetails, amountRaised } = req.body;
+      const { tokenName, totalSupply, owner, pricePerToken, symbol, saftDetails, amountRaised, offerType } = req.body;
       console.log("🚀 ~ file: create.ts:15 ~ handler ~ owner:", owner);
 
       // Mock token creation logic (In a real scenario, interact with blockchain)
@@ -23,7 +24,13 @@ export default async function handler(req, res) {
 
       // Deploy the contract
       const SAFTTokenFactory = new ethers.ContractFactory(SAFTToken.abi, SAFTToken.bytecode, wallet);
-      const saftToken = await SAFTTokenFactory.deploy(owner, ethers.utils.formatBytes32String(""), metadataUri);
+      const saftToken = await SAFTTokenFactory.deploy(
+        owner,
+        ethers.utils.formatBytes32String(""),
+        metadataUri,
+        ethers.utils.parseUnits(totalSupply + "", 18),
+        zeroAddress,
+      );
 
       const deployedContract = await saftToken.deployed();
 
@@ -42,6 +49,23 @@ export default async function handler(req, res) {
         userId: user.id,
       });
       console.log("🚀 ~ file: create.ts:45 ~ handler ~ projectCreated:", projectCreated);
+
+      // create an automated sell order
+      await createSellOrder({
+        contractAddress: deployedContract.address,
+        price: parseFloat(pricePerToken),
+        amount: totalSupply,
+        walletAddress: owner,
+      });
+
+      // add balance to the deployer wallet
+      await createDealDeposit({
+        contractAddress: deployedContract.address,
+        walletAddress: owner,
+        amount: totalSupply,
+        transactionHash: deployedContract.deployTransaction.hash,
+        symbol,
+      });
 
       return res.status(200).json({
         data: {

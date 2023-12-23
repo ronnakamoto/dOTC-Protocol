@@ -29,6 +29,7 @@
     "daisyui": "^3.5.1",
     "files-from-path": "^1.0.4",
     "formidable": "^3.5.1",
+    "heap-js": "^2.3.0",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.3.11",
     "next": "^13.1.6",
