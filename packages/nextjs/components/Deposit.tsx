@@ -1,27 +1,33 @@
 import React, { useEffect, useState } from "react";
 import TradingWalletABI from "../public/artifacts/contracts/TradingWallet.sol/TradingWallet.json";
-import USDTABI from "../public/artifacts/contracts/USDT.sol/USDT.json";
+import LoadingSpinner from "./LoadingIndicator";
 import { ethers } from "ethers";
-import { useAccount, useContractWrite, useWaitForTransaction } from "wagmi";
-import { useScaffoldContractRead } from "~~/hooks/scaffold-eth";
+import { formatUnits, parseUnits } from "viem";
+import { useAccount, useWaitForTransaction } from "wagmi";
+import { useDeployedContractInfo, useScaffoldContractRead, useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
-const TRADING_WALLET_ADDRESS = "0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677";
-const USDT_CONTRACT_ADDRESS = "0x3D6D1F095a3F3c3bb889847d009c105D197D1735";
+// TODO: Use env to get the real USDT contract address on mainnets
+// const TRADING_WALLET_ADDRESS = "0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677";
+// const USDT_CONTRACT_ADDRESS = "0x184bc3968e47DDD10984940566FFbEC841C66510";
 
 const Deposit = () => {
   const { address: userAddress } = useAccount();
   const [amount, setAmount] = useState("0");
-  const [allowance, setAllowance] = useState("0");
+  const [allowance, setAllowance] = useState(ethers.utils.parseUnits("0", 18).toBigInt());
   const [depositTxnHash, setDepositTxnHash] = useState("");
   const [deposits, setDeposits] = useState([]);
-  const [refreshDeposits, setRefreshDeposits] = useState(true);
+  const [refreshDeposits, setRefreshDeposits] = useState(false);
   const [depositStatus, setDepositStatus] = useState("");
+  const tradingWalletContract = useDeployedContractInfo("TradingWallet");
+  const usdtContract = useDeployedContractInfo("USDT");
+  const [txnHistoryLoading, setTxnHistoryLoading] = useState(true);
 
-  const { writeAsync: callDeposit, isLoading: isDepositLoading } = useContractWrite({
-    address: TRADING_WALLET_ADDRESS,
+  const { writeAsync: callDeposit, isLoading: isDepositLoading } = useScaffoldContractWrite({
+    contractName: "TradingWallet",
     functionName: "depositERC20",
-    abi: TradingWalletABI?.abi,
+    args: [usdtContract.data?.address, parseUnits(amount, 18)],
+    // abi: TradingWalletABI?.abi,
     onSuccess: (data: any) => {
       console.log("🚀 ~ file: Deposit.tsx:25 ~ Deposit ~ data:", data);
 
@@ -29,43 +35,48 @@ const Deposit = () => {
       fetch("/api/wallet/pending-deposit", {
         method: "POST",
         body: JSON.stringify({
-          contractAddress: TRADING_WALLET_ADDRESS,
+          contractAddress: tradingWalletContract.data?.address,
           walletAddress: userAddress,
           transactionHash: data.hash,
           amount,
+          symbol: "USDT",
         }),
       })
         .then(response => response.json())
         .then(data => {
-          setRefreshDeposits(true);
           setDepositStatus("PENDING");
           console.log("🚀 ~ file: Deposit.tsx:82 ~ useEffect ~ data:", data);
           notification.info("Deposit is pending and is being processed");
         })
-        .catch(err => console.log(err));
-      // Reset the amount after deposit
-      setAmount("0");
-      setDepositTxnHash(data.hash);
+        .catch(err => console.log(err))
+        .finally(() => {
+          setRefreshDeposits(true);
+          // Reset the amount after deposit
+          setAmount("0");
+          setDepositTxnHash(data.hash);
+        });
     },
   });
 
-  const { writeAsync: callApprove, isLoading: isApproveLoading } = useContractWrite({
-    address: "0x3D6D1F095a3F3c3bb889847d009c105D197D1735",
+  const { writeAsync: callApprove, isLoading: isApproveLoading } = useScaffoldContractWrite({
+    contractName: "USDT",
     functionName: "approve",
-    abi: USDTABI?.abi,
+    args: [tradingWalletContract.data?.address, parseUnits(amount, 18)],
+    // abi: USDTABI?.abi,
     onSuccess: (data: any) => {
       console.log("Transaction data", data);
-      notification.success(`Approval is successful`);
+      // notification.success(`Approval is successful`);
     },
   });
 
   const { data: allowanceData } = useScaffoldContractRead({
     contractName: "USDT",
     functionName: "allowance",
-    args: [userAddress, "0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677"],
+    args: [userAddress, tradingWalletContract.data?.address],
   });
 
   useEffect(() => {
+    console.log("Fetched allowance data...", allowanceData);
     if (allowanceData) {
       console.log("🚀 ~ file: Deposit.tsx:42 ~ useEffect ~ allowanceData:", allowanceData);
       setAllowance(allowanceData);
@@ -73,10 +84,11 @@ const Deposit = () => {
   }, [allowanceData]);
 
   const isApprovalNeeded = () => {
+    console.log("Amount and allowance: ", parseFloat(amount), parseFloat(formatUnits(allowance, 18)));
     if (!amount && !allowance) {
       return true;
     }
-    return ethers.utils.parseUnits(amount, 18).gt(allowance);
+    return parseFloat(amount) > parseFloat(formatUnits(allowance, 18));
   };
 
   const { data: txnData } = useWaitForTransaction({
@@ -124,24 +136,27 @@ const Deposit = () => {
 
   const handleDeposit = () => {
     // Logic to interact with the TradingWallet contract
-    console.log(`Depositing ${amount}`);
-    callDeposit({ args: ["0x3D6D1F095a3F3c3bb889847d009c105D197D1735", ethers.utils.parseUnits(amount, 18)] });
+    console.log(`Depositing ${amount} => ${BigInt(ethers.utils.parseUnits(amount, 18).toString())}`);
+    callDeposit({ args: [usdtContract.data?.address, parseUnits(amount, 18)] });
   };
 
   const handleApprove = () => {
     console.log(`Approving ${amount}`);
-    callApprove({ args: ["0x403b9F5580a6Dd698AA90DEe3b36b4a54Cf13677", ethers.utils.parseUnits(amount, 18)] });
+    callApprove({ args: [tradingWalletContract.data?.address, parseUnits(amount, 18)] });
   };
 
   useEffect(() => {
-    if (refreshDeposits && userAddress) {
+    if (userAddress) {
       fetch(`/api/wallet/all-deposits?walletAddress=${userAddress}`)
         .then(response => response.json())
         .then(data => {
           console.log("🚀 ~ file: Deposit.tsx:82 ~ useEffect ~ data:", data);
           setDeposits(data);
         })
-        .catch(err => console.log(err));
+        .catch(err => console.log(err))
+        .finally(() => {
+          setTxnHistoryLoading(false);
+        });
       setRefreshDeposits(false);
     }
   }, [refreshDeposits, userAddress]);
@@ -164,6 +179,14 @@ const Deposit = () => {
     }
   };
 
+  if (txnHistoryLoading) {
+    return (
+      <div className="flex w-full justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full flex-wrap">
       <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-md w-full">
@@ -172,7 +195,7 @@ const Deposit = () => {
           type="number"
           className="input input-bordered input-sm"
           value={amount}
-          onChange={e => setAmount(e.target.value)}
+          onChange={e => setAmount(e.target.value ?? "0")}
           placeholder="Enter amount"
         />
         <button className="btn btn-sm btn-secondary m-2" onClick={handleApprove} disabled={!isApprovalNeeded()}>
@@ -199,14 +222,18 @@ const Deposit = () => {
               {deposits.length ? (
                 deposits.map((deposit: any, index: number) => (
                   <tr key={index}>
-                    <td>{deposit?.symbol ?? "USDT"}</td>
+                    <td className="font-bold">{deposit?.symbol ?? "USDT"}</td>
                     <td>{deposit.amount}</td>
                     <td>{deposit?.transactionHash ?? ""}</td>
                     <td>{getStatus(deposit.status)}</td>
                   </tr>
                 ))
               ) : (
-                <tr className="flex w-full text-center justify-center">No Deposits ...</tr>
+                <tr className="flex-1 w-full justify-center">
+                  <td className="text-center p-4" colSpan={100}>
+                    No Deposits ...
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

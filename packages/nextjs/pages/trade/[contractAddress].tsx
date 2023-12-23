@@ -5,6 +5,7 @@ import CandlestickChartComponent from "~~/components/CandlestickChart";
 import OrderBook from "~~/components/OrderBook";
 import OrderPlacement from "~~/components/OrderPlacement";
 import TradeOverview from "~~/components/TradeOverview";
+import { formatCurrency } from "~~/utils";
 import { notification } from "~~/utils/scaffold-eth";
 
 function groupOrdersByPrice(orders) {
@@ -38,6 +39,10 @@ export default function TradingTerminal() {
   const [buyOrders, setBuyOrders] = useState([]);
   const [sellOrders, setSellOrders] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(0);
+  const [stats, setStats] = useState({
+    fdv: 0,
+    marketCap: 0,
+  });
 
   const onOrderPlaced = (data: any) => {
     console.log("🚀 ~ file: [contractAddress].tsx:27 ~ onOrderPlaced ~ data:", data);
@@ -52,6 +57,13 @@ export default function TradingTerminal() {
         .then(data => {
           console.log("🚀 ~ file: index.tsx:28 ~ useEffect ~ data:", data);
           setCurrentPrice(data);
+        });
+
+      fetch(`/api/trade/${router.query.contractAddress}/stats`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("🚀 ~ file: index.tsx:28 ~ useEffect ~ data:", data);
+          setStats(data);
         });
     }
   }, [router.query.contractAddress]);
@@ -98,7 +110,7 @@ export default function TradingTerminal() {
           <CandlestickChartComponent />
         </div>
         <div className="flex-grow">
-          <TradeOverview volume="1.23M" price={currentPrice} marketCap="$1.23B" />
+          <TradeOverview volume="1.23M" price={currentPrice} marketCap={formatCurrency(stats.marketCap)} />
         </div>
       </div>
       <div className="flex">

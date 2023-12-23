@@ -3,12 +3,13 @@ import { savePendingDeposit } from "~~/services/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { transactionHash, amount, contractAddress, walletAddress } = JSON.parse(req.body);
+    const { transactionHash, amount, contractAddress, walletAddress, symbol } = JSON.parse(req.body);
     const pendingDeposit = await savePendingDeposit({
       amount: parseFloat(amount),
       transactionHash,
       contractAddress,
       walletAddress,
+      symbol,
     });
     res.status(200).json(pendingDeposit);
   } catch (error) {

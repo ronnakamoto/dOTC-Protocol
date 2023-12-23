@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import LoadingSpinner from "~~/components/LoadingIndicator";
 
 export default function ListSafts() {
+  const [loadingDeals, setLoadingDeals] = useState(true);
   const [safts, setSafts] = useState<any>([]);
   const { address, isConnected } = useAccount();
 
@@ -18,9 +20,21 @@ export default function ListSafts() {
         .then(res => res.json())
         .then(data => {
           setSafts(data);
+        })
+        .finally(() => {
+          setLoadingDeals(false);
         });
     }
   }, [address, isConnected]);
+
+  if (loadingDeals) {
+    return (
+      <div className="flex w-full justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <div className="flex justify-end m-4">
@@ -59,8 +73,10 @@ export default function ListSafts() {
                   </tr>
                 ))
             ) : (
-              <tr className="flex justify-center">
-                <td>Loading SAFTs data ...</td>
+              <tr className="flex-1 w-full justify-center">
+                <td className="text-center p-4" colSpan={100}>
+                  No Deals ...
+                </td>
               </tr>
             )}
           </tbody>

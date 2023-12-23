@@ -269,7 +269,6 @@ export async function getAvailableBalance(contractAddress: string, walletAddress
       amount: true,
     },
   });
-  console.log("🚀 ~ file: index.ts:239 ~ getAvailableBalance ~ initialBalance:", initialBalance);
 
   // Calculate the impact of buy orders (filled and partially filled)
   const buyOrdersSum = await prisma.order.aggregate({
@@ -308,14 +307,13 @@ export async function getAvailableBalance(contractAddress: string, walletAddress
       amount: true,
     },
   });
-  console.log("🚀 ~ file: index.ts:278 ~ getAvailableBalance ~ sellOrdersSum:", sellOrdersSum);
 
   // Calculate the available balance
   const availableBalance =
     (initialBalance?.amount ?? 0) + (buyOrdersSum._sum.amount ?? 0) - (sellOrdersSum._sum.amount ?? 0);
   console.log("🚀 ~ file: index.ts:280 ~ getAvailableBalance ~ availableBalance:", availableBalance);
 
-  return availableBalance;
+  return availableBalance > 0 ? availableBalance : 0;
 }
 
 export async function createSellOrder({ contractAddress, price, amount, walletAddress }: any) {
@@ -428,7 +426,7 @@ export async function createDealDeposit({ contractAddress, walletAddress, amount
   });
 }
 
-export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash }: any) {
+export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash, symbol }: any) {
   const user = await prisma.user.findUnique({
     where: {
       wallet: walletAddress,
@@ -447,6 +445,7 @@ export async function savePendingDeposit({ contractAddress, walletAddress, amoun
       transactionHash,
       status: WalletTxnStatus.PENDING,
       transactionType: WalletTxnType.DEPOSIT,
+      symbol,
     },
   });
 }
@@ -598,3 +597,51 @@ function updateHeapAfterTrade(heap, order, tradeAmount) {
 }
 
 // MATCHING ENGINE: END
+
+export async function getAssetStats(contractAddress: string) {
+  const project = await getProjectByContractAddress(contractAddress);
+  if (!project) {
+    throw new Error("Project not found");
+  }
+  const initialPrice = project.pricePerToken;
+
+  const latestTrade = await prisma.trade.findFirst({
+    where: {
+      projectId: project.id,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      price: true,
+    },
+  });
+
+  const currentPrice = latestTrade?.price ?? initialPrice;
+
+  // Get the sum of amounts from filled and partially filled BUY orders
+  const orders = await prisma.order.findMany({
+    where: {
+      AND: [
+        { projectId: project.id },
+        { type: "BUY" },
+        {
+          OR: [{ status: "FILLED" }, { status: "PARTIALLY_FILLED" }],
+        },
+      ],
+    },
+  });
+
+  // Calculate circulating supply
+  const circulatingSupply = orders.reduce((sum, order) => sum + order.amount, 0);
+
+  // Calculate market cap
+  const marketCap = circulatingSupply * currentPrice;
+
+  const fdv = (project?.totalSupply ?? 0) * currentPrice;
+
+  return {
+    marketCap,
+    fdv,
+  };
+}
