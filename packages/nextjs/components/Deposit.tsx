@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import TradingWalletABI from "../public/artifacts/contracts/TradingWallet.sol/TradingWallet.json";
+import LoadingSpinner from "./LoadingIndicator";
 import { ethers } from "ethers";
 import { formatUnits, parseUnits } from "viem";
 import { useAccount, useWaitForTransaction } from "wagmi";
@@ -20,6 +21,7 @@ const Deposit = () => {
   const [depositStatus, setDepositStatus] = useState("");
   const tradingWalletContract = useDeployedContractInfo("TradingWallet");
   const usdtContract = useDeployedContractInfo("USDT");
+  const [txnHistoryLoading, setTxnHistoryLoading] = useState(true);
 
   const { writeAsync: callDeposit, isLoading: isDepositLoading } = useScaffoldContractWrite({
     contractName: "TradingWallet",
@@ -151,7 +153,10 @@ const Deposit = () => {
           console.log("🚀 ~ file: Deposit.tsx:82 ~ useEffect ~ data:", data);
           setDeposits(data);
         })
-        .catch(err => console.log(err));
+        .catch(err => console.log(err))
+        .finally(() => {
+          setTxnHistoryLoading(false);
+        });
       setRefreshDeposits(false);
     }
   }, [refreshDeposits, userAddress]);
@@ -173,6 +178,14 @@ const Deposit = () => {
       }
     }
   };
+
+  if (txnHistoryLoading) {
+    return (
+      <div className="flex w-full justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-wrap">
@@ -209,7 +222,7 @@ const Deposit = () => {
               {deposits.length ? (
                 deposits.map((deposit: any, index: number) => (
                   <tr key={index}>
-                    <td>{deposit?.symbol ?? "USDT"}</td>
+                    <td className="font-bold">{deposit?.symbol ?? "USDT"}</td>
                     <td>{deposit.amount}</td>
                     <td>{deposit?.transactionHash ?? ""}</td>
                     <td>{getStatus(deposit.status)}</td>
