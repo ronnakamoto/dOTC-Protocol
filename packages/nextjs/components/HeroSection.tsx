@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BoltIcon } from "@heroicons/react/24/outline";
 
 export default function HeroSection() {
@@ -8,12 +9,15 @@ export default function HeroSection() {
         <p className="mt-3 text-xl md:text-2xl lg:text-3xl max-w-md mx-auto">
           Experience the pinnacle of OTC trading for Web3 assets.
         </p>
-        <div className="mt-6">
+        <div className="my-6">
           <BoltIcon className="w-16 h-16 animate-pulse mx-auto text-yellow-300" />
         </div>
-        <button className="mt-8 bg-white text-blue-600 font-semibold py-2 px-4 rounded-lg shadow hover:bg-gray-100 transition duration-300">
+        <Link
+          href="/trade"
+          className="mt-2 bg-white text-blue-600 font-semibold py-2 px-4 rounded-lg shadow hover:bg-gray-100 transition duration-300"
+        >
           Get Started
-        </button>
+        </Link>
       </div>
     </div>
   );

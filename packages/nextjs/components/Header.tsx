@@ -18,7 +18,7 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/",
   },
   {
-    label: "Manage SAFTs",
+    label: "Deals",
     href: "/vc/list-saft",
     icon: <NewspaperIcon className="h-4 w-4" />,
   },
