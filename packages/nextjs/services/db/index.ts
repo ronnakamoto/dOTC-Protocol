@@ -1,5 +1,17 @@
 import prisma from "../../prisma/prisma";
-import { OrderStatus, OrderType, Prisma, WalletTxnStatus, WalletTxnType } from "@prisma/client";
+import {
+  DealStatus,
+  DealViewType,
+  OrderStatus,
+  OrderType,
+  Prisma,
+  WalletTxnStatus,
+  WalletTxnType,
+} from "@prisma/client";
+import { Heap } from "heap-js";
+import { removeArrayDuplicatesByProperty } from "~~/utils";
+
+const ORDER_FETCH_LIMIT = 10000;
 
 export async function createUser({ wallet }: Prisma.UserUncheckedCreateInput) {
   const user = await prisma.user.upsert({
@@ -24,6 +36,7 @@ export async function createProject({
   transactionHash,
   chainId,
   userId,
+  offerType,
 }: any) {
   const project = await prisma.project.create({
     data: {
@@ -37,6 +50,9 @@ export async function createProject({
       symbol,
       totalSupply,
       userId,
+      properties: {
+        offerType,
+      },
     },
   });
   return project;
@@ -194,33 +210,50 @@ export async function getPrice24HoursAgo(contractAddress: string) {
 }
 
 export async function getPricesOfAllProjects(walletAddress: string) {
-  const whitelist = await prisma.whitelist.findMany({
-    where: {
-      userWalletAddress: walletAddress,
-    },
-    include: {
-      project: {
-        include: {
-          Trade: {
-            orderBy: {
-              createdAt: "desc",
+  try {
+    const activeDeals = await prisma.project.findMany({
+      where: {
+        status: DealStatus.ACTIVE,
+      },
+    });
+
+    const publicDeals = activeDeals.filter(deal => deal.properties.viewType === DealViewType.PUBLIC);
+    console.log("🚀 ~ file: index.ts:214 ~ getPricesOfAllProjects ~ publicDeals:", publicDeals);
+    const privateDeals = await prisma.whitelist.findMany({
+      where: {
+        userWalletAddress: walletAddress,
+      },
+      include: {
+        project: {
+          include: {
+            Trade: {
+              orderBy: {
+                createdAt: "desc",
+              },
+              take: 1,
             },
-            take: 1,
           },
         },
       },
-    },
-  });
+    });
+    console.log("🚀 ~ file: index.ts:232 ~ getPricesOfAllProjects ~ privateDeals:", privateDeals);
 
-  const safts = whitelist.map(w => ({
-    id: w.projectId,
-    name: w.project.name,
-    symbol: w.project.symbol,
-    contractAddress: w.project.contractAddress,
-    price: w.project.Trade.length ? w.project.Trade[0].price : w.project.pricePerToken,
-  }));
+    const deals = removeArrayDuplicatesByProperty([...publicDeals, ...privateDeals], "id").map((w: any) => ({
+      id: w.projectId,
+      name: w?.project?.name ?? w.name,
+      symbol: w?.project?.symbol ?? w.symbol,
+      contractAddress: w?.project?.contractAddress ?? w.contractAddress,
+      price: w?.project
+        ? w.project.Trade.length
+          ? w.project.Trade[0].price
+          : w.project.pricePerToken
+        : w.pricePerToken,
+    }));
 
-  return safts;
+    return deals;
+  } catch (error) {
+    console.log("🚀 ~ file: index.ts:252 ~ getPricesOfAllProjects ~ error:", error);
+  }
 }
 
 export async function getAvailableBalance(contractAddress: string, walletAddress: string) {
@@ -371,6 +404,30 @@ export async function addSaftOTokenDeposit({ contractAddress, walletAddress, amo
   });
 }
 
+export async function createDealDeposit({ contractAddress, walletAddress, amount, transactionHash, symbol }: any) {
+  const user = await prisma.user.findUnique({
+    where: {
+      wallet: walletAddress,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return await prisma.wallet.create({
+    data: {
+      contractAddress,
+      userId: user.id,
+      amount,
+      transactionHash,
+      status: WalletTxnStatus.PROCESSED,
+      transactionType: WalletTxnType.DEPOSIT,
+      symbol,
+    },
+  });
+}
+
 export async function savePendingDeposit({ contractAddress, walletAddress, amount, transactionHash }: any) {
   const user = await prisma.user.findUnique({
     where: {
@@ -459,3 +516,85 @@ export async function registerBundler({ registrationId, requestId }: any) {
     throw error;
   }
 }
+
+// MATCHING ENGINE: START
+const buyOrderComparator = (a: any, b: any) => b.price - a.price || a.createdAt - b.createdAt; // Higher price first
+const sellOrderComparator = (a: any, b: any) => a.price - b.price || a.createdAt - b.createdAt; // Lower price first
+
+export async function settleTrades() {
+  // Initialize heaps
+  const buyOrdersHeap = new Heap(buyOrderComparator);
+  const sellOrdersHeap = new Heap(sellOrderComparator);
+
+  // Fetch and populate heaps
+  const [buyOrders, sellOrders] = await Promise.all([fetchOrders("BUY"), fetchOrders("SELL")]);
+  buyOrdersHeap.init(buyOrders);
+  sellOrdersHeap.init(sellOrders);
+
+  // Matching loop
+  while (!buyOrdersHeap.isEmpty() && !sellOrdersHeap.isEmpty()) {
+    const topBuy = buyOrdersHeap.peek();
+    const topSell = sellOrdersHeap.peek();
+
+    if (topSell.price > topBuy.price) {
+      break; // No match possible
+    }
+
+    const tradeAmount = Math.min(topBuy.amount, topSell.amount);
+    const tradePrice = topSell.price; // Price of the first sell order
+
+    // Create a trade (in a transaction)
+    await prisma.$transaction(async prisma => {
+      await prisma.trade.create({
+        data: {
+          buyOrderId: topBuy.id,
+          sellOrderId: topSell.id,
+          price: tradePrice,
+          amount: tradeAmount,
+          projectId: topBuy.projectId,
+        },
+      });
+
+      // Update order amounts and statuses
+      await updateOrder(topBuy.id, tradeAmount);
+      await updateOrder(topSell.id, tradeAmount);
+    });
+
+    // Update heaps
+    updateHeapAfterTrade(buyOrdersHeap, topBuy, tradeAmount);
+    updateHeapAfterTrade(sellOrdersHeap, topSell, tradeAmount);
+  }
+}
+
+async function fetchOrders(type: OrderType) {
+  return await prisma.order.findMany({
+    where: { type, status: { in: ["OPEN", "PARTIALLY_FILLED"] } },
+    orderBy: [{ price: type === "BUY" ? "desc" : "asc" }, { createdAt: "asc" }],
+    take: ORDER_FETCH_LIMIT,
+  });
+}
+
+async function updateOrder(orderId, tradeAmount) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) {
+    throw new Error("Order not found");
+  }
+  const newAmount = order.amount - tradeAmount;
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      amount: newAmount,
+      status: newAmount === 0 ? "FILLED" : "PARTIALLY_FILLED",
+    },
+  });
+}
+
+function updateHeapAfterTrade(heap, order, tradeAmount) {
+  order.amount -= tradeAmount;
+  heap.pop();
+  if (order.amount > 0) {
+    heap.push(order);
+  }
+}
+
+// MATCHING ENGINE: END

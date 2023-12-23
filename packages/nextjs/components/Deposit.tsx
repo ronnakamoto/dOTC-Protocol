@@ -199,7 +199,7 @@ const Deposit = () => {
               {deposits.length ? (
                 deposits.map((deposit: any, index: number) => (
                   <tr key={index}>
-                    <td>USDT</td>
+                    <td>{deposit?.symbol ?? "USDT"}</td>
                     <td>{deposit.amount}</td>
                     <td>{deposit?.transactionHash ?? ""}</td>
                     <td>{getStatus(deposit.status)}</td>
