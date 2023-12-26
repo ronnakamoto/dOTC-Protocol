@@ -11,13 +11,18 @@ const CreateSaft = () => {
     projectSymbol: "",
     amountRaised: 0,
     pricePerToken: 0,
+    roundFdv: 0,
     saftDetails: "",
     offerType: "SAFT",
+    traderRole: "INDIVIDUAL",
+    counterpartyRole: "ANY",
   });
   const [totalSupply, setTotalSupply] = useState<number>(0);
   const [totalSupplyCalculationType, setTotalSupplyCalculationType] = useState("automaticCalculation");
   const [loading, setLoading] = useState<boolean>(false);
   const { address } = useAccount();
+  const [tradeType, setTradeType] = useState("NORMAL");
+  const [traderType, setTraderType] = useState("SELLER");
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -37,7 +42,10 @@ const CreateSaft = () => {
         saftDetails: formData.saftDetails,
         symbol: "o" + formData.projectSymbol,
         amountRaised: formData.amountRaised,
+        roundFdv: formData.roundFdv,
         offerType: formData.offerType,
+        traderRole: formData.traderRole,
+        counterpartyRole: formData.counterpartyRole,
       });
       console.log("🚀 ~ file: create-saft.tsx:40 ~ handleSubmit ~ response:", response);
 
@@ -51,6 +59,8 @@ const CreateSaft = () => {
           pricePerToken: 0,
           saftDetails: "",
           offerType: "SAFT",
+          traderRole: "INDIVIDUAL",
+          counterpartyRole: "ANY",
         });
       }
     } catch (error) {
@@ -134,6 +144,33 @@ const CreateSaft = () => {
                 className="textarea textarea-sm textarea-bordered max-w-sm mb-4"
               />
             </div>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-bold">Choose style of OTC Trading</span>
+              </label>
+              <label className="label cursor-pointer max-w-sm">
+                <input
+                  type="radio"
+                  name="trading-style"
+                  className="radio radio-primary"
+                  checked={tradeType === "NORMAL"}
+                  value="NORMAL"
+                  onChange={e => setTradeType(e.target.value)}
+                />
+                <span className="label-text">Normal(CEX-Like Spot Trading)</span>
+              </label>
+              <label className="label cursor-pointer max-w-sm">
+                <input
+                  type="radio"
+                  name="trading-style"
+                  className="radio radio-primary"
+                  value="LOT"
+                  checked={tradeType === "LOT"}
+                  onChange={e => setTradeType(e.target.value)}
+                />
+                <span className="label-text">Lot(With Min Order Size/RFQ)</span>
+              </label>
+            </div>
           </form>
         </div>
 
@@ -142,7 +179,84 @@ const CreateSaft = () => {
           {/* <div className="shadow-lg border border-gray-200 rounded-lg overflow-hidden transform rotate-0 hover:rotate-3 transition-transform duration-300">
           <Image src="/dotc-placeholder.png" alt="NFT Placeholder" width={300} height={300} className="rounded-lg" />
         </div> */}
+
           <div className="form-control w-full mb-2 mt-8">
+            <label className="label">
+              <span className="label-text font-bold">Are you are seller or a buyer?</span>
+            </label>
+            <div className="flex flex-row">
+              <label className="label cursor-pointer justify-start">
+                <input
+                  type="radio"
+                  name="traderType"
+                  className="radio radio-primary"
+                  checked={traderType === "SELLER"}
+                  value="SELLER"
+                  onChange={e => setTraderType(e.target.value)}
+                />
+                <span className="label-text pl-2">Seller</span>
+              </label>
+              <label className="label cursor-pointer justify-start">
+                <input
+                  type="radio"
+                  name="traderType"
+                  className="radio radio-primary"
+                  value="BUYER"
+                  checked={traderType === "BUYER"}
+                  onChange={e => setTraderType(e.target.value)}
+                />
+                <span className="label-text pl-2">Buyer</span>
+              </label>
+            </div>
+          </div>
+          <div className="form-control w-full mb-2">
+            <label className="label">
+              <span className="label-text font-bold">What best describes you?</span>
+            </label>
+            <select
+              name="traderRole"
+              value={formData.traderRole}
+              onChange={handleChange}
+              className="select select-bordered select-sm max-w-sm"
+            >
+              <option value={"INDIVIDUAL"}>Individual</option>
+              <option value={"VC"}>VC</option>
+              <option value={"HEDGE_FUND"}>Hege Fund</option>
+              <option value={"FAMILY_HOUSE"}>Family House</option>
+            </select>
+          </div>
+          <div className="form-control w-full mb-2">
+            <label className="label">
+              <span className="label-text font-bold">Type of counterparty allowed?</span>
+            </label>
+            <select
+              name="counterpartyRole"
+              value={formData.counterpartyRole}
+              onChange={handleChange}
+              className="select select-bordered select-sm max-w-sm"
+            >
+              <option value={"ANY"}>Any</option>
+              <option value={"INDIVIDUAL"}>Individual</option>
+              <option value={"VC"}>VC</option>
+              <option value={"HEDGE_FUND"}>Hege Fund</option>
+              <option value={"FAMILY_HOUSE"}>Family House</option>
+            </select>
+          </div>
+          <div className="form-control max-w-sm mb-2">
+            <label className="label">
+              <span className="label-text">What is the round FDV($)?</span>
+            </label>
+
+            <input
+              type="number"
+              name="roundFdv"
+              placeholder="Round FDV (In USD)"
+              onChange={handleChange}
+              value={formData.roundFdv}
+              className="input input-sm input-bordered max-w-sm"
+            />
+          </div>
+          <div className="form-control w-full mb-2">
             <label className="label">
               <span className="label-text font-bold">Choose how to calculate total supply of OTC tokens</span>
             </label>
