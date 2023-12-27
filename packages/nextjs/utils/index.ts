@@ -29,5 +29,5 @@ export function formatCurrency(amount: any) {
   const dividedAmount = (numericAmount / divisor).toFixed(2);
 
   // Return the formatted string
-  return `$${dividedAmount}${suffix}`;
+  return `${dividedAmount}${suffix}`;
 }
