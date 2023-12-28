@@ -24,6 +24,12 @@ export default function CreateDeal() {
 
   const onSubmit = () => {
     console.log("Submit clicked: allStepsData => ", allStepsData);
+    fetch("/api/deal/create", {
+      method: "POST",
+      body: JSON.stringify(allStepsData),
+    })
+      .then(response => response.json())
+      .catch(err => console.log(err));
   };
 
   const onJumpToStep = (step: number) => {

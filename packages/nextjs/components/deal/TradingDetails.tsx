@@ -13,10 +13,10 @@ export default function TradingDetails({
       ? initialState
       : {
           tradeType: "NORMAL",
-          totalSupplyCalculationType: "AUTOMATIC",
           tokensToSell: 0,
           pricePerToken: 0,
           serviceCharge: 5,
+          minBuyAmount: 0,
         },
   );
 
@@ -107,6 +107,22 @@ export default function TradingDetails({
           className="input input-sm input-bordered w-full"
         />
       </div>
+      {details.tradeType === "LOT" && (
+        <div className="form-control max-w-sm mb-2">
+          <label className="label">
+            <span className="label-text">Minimum number of tokens for purchase</span>
+          </label>
+
+          <input
+            type="number"
+            name="minBuyAmount"
+            placeholder="Min. amount that can be bought"
+            onChange={handleChange}
+            value={details.minBuyAmount}
+            className="input input-sm input-bordered max-w-sm"
+          />
+        </div>
+      )}
       {/* Display OTC Token Marketcap */}
       {/* <div className="font-semibold">
         {details.otcMarketcap > 0 && <p>OTC Initial Marketcap: ${parseFloat(details.otcMarketcap).toFixed(2)}</p>}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 export default function GeneralDetails({
   updateState,
@@ -13,7 +14,8 @@ export default function GeneralDetails({
       : {
           projectName: "",
           projectSymbol: "",
-          saftDetails: "",
+          description: "",
+          dealVisibility: "PUBLIC",
         },
   );
 
@@ -62,12 +64,47 @@ export default function GeneralDetails({
         </label>
 
         <textarea
-          name="saftDetails"
+          name="description"
           placeholder="Deal Details"
           onChange={handleChange}
-          value={details.saftDetails}
+          value={details.description}
           className="textarea textarea-sm textarea-bordered max-w-sm mb-4"
         />
+      </div>
+      <div className="form-control w-full">
+        <label className="label justify-start">
+          <span className="label-text">Choose visibility of deal</span>
+          <span
+            className="ml-2 cursor-pointer tooltip tooltip-info tooltip-right h-6 w-6"
+            data-tip="Public - Can be seen by anyone. Private - Viewable by those with link and has been whitelisted"
+          >
+            <InformationCircleIcon />
+          </span>
+        </label>
+        <div className="flex flex-row">
+          <label className="label cursor-pointer justify-start">
+            <input
+              type="radio"
+              name="dealVisibility"
+              className="radio radio-primary"
+              checked={details.dealVisibility === "PUBLIC"}
+              value="PUBLIC"
+              onChange={handleChange}
+            />
+            <span className="label-text pl-2">Public</span>
+          </label>
+          <label className="label cursor-pointer justify-start">
+            <input
+              type="radio"
+              name="dealVisibility"
+              className="radio radio-primary"
+              value="LOT"
+              checked={details.dealVisibility === "PRIVATE"}
+              onChange={handleChange}
+            />
+            <span className="label-text pl-2">Private</span>
+          </label>
+        </div>
       </div>
     </>
   );

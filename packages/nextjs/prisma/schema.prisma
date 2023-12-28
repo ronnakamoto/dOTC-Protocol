@@ -23,9 +23,9 @@ model User {
   Wallet     Wallet[]
 }
 
-enum DealViewType {
+enum DealVisibilityType {
   PUBLIC
-  WHITELIST
+  PRIVATE
 }
 
 enum OfferType {
@@ -39,41 +39,66 @@ enum TradeType {
   LOT
 }
 
-type DealProperties {
-  viewType  DealViewType @default(PUBLIC)
-  offerType OfferType?
-  tradeType TradeType?   @default(NORMAL)
-}
-
 enum DealStatus {
   ACTIVE
   ARCHIVED
   CANCELLED
 }
 
+enum SellerType {
+  INDIVIDUAL
+  VC
+  HEDGE_FUND
+  FAMILY_HOUSE
+}
+
+enum InvestmentRoundType {
+  PRE_SEED
+  SEED
+  ROUND_A
+  ROUND_B
+  ROUND_C
+  TIER_1
+  TIER_2
+  TIER_3
+  PRIVATE
+}
+
 model Project {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  totalSupply     Float?
-  amountRaised    Float
-  pricePerToken   Float
-  saftDetails     String?
-  saftMerkleRoot  String?
-  contractAddress String?
-  symbol          String
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
+  // general details
+  name           String
+  symbol         String
+  description    String?
+  dealVisibility DealVisibilityType?
+
+  // round details
+  offerType          OfferType?
+  investmentRound    InvestmentRoundType?
+  sellerType         SellerType?
+  roundFdv           Float?
+  roundPricePerToken Float?
+  // tradingDetails
+  tradeType          TradeType?
+  tokensToSell       Float?
+  pricePerToken      Float
+  serviceCharge      Float
+
   transactionHash String?
   csvCid          String?
   chainId         Int?
-  properties      DealProperties
-  status          DealStatus     @default(ACTIVE)
-  tokens          Token[]
-  createdBy       User           @relation(fields: [userId], references: [id])
-  userId          String         @db.ObjectId
-  createdAt       DateTime?      @default(now())
-  updatedAt       DateTime?      @updatedAt
-  Whitelist       Whitelist[]
-  Trade           Trade[]
-  Order           Order[]
+  saftMerkleRoot  String?
+  contractAddress String?
+
+  status    DealStatus  @default(ACTIVE)
+  tokens    Token[]
+  createdBy User        @relation(fields: [userId], references: [id])
+  userId    String      @db.ObjectId
+  createdAt DateTime?   @default(now())
+  updatedAt DateTime?   @updatedAt
+  Whitelist Whitelist[]
+  Trade     Trade[]
+  Order     Order[]
 }
 
 model Token {

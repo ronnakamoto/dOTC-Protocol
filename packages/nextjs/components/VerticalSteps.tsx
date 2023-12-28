@@ -19,6 +19,7 @@ interface StepsProps {
   onSubmit: () => void;
   onJumpToStep: (step: number) => void;
   summary: Summary;
+  isSubmitButtonLoading: boolean;
 }
 
 export default function VerticalSteps({
@@ -29,6 +30,7 @@ export default function VerticalSteps({
   onSubmit,
   onJumpToStep,
   summary,
+  isSubmitButtonLoading,
 }: StepsProps) {
   return (
     <div className="grid grid-cols-12 gap-4 w-full">
@@ -54,7 +56,7 @@ export default function VerticalSteps({
         {steps[currentStep].content}
       </div>
       {summary && (
-        <div className="col-span-4 p-4 bg-secondary border-r-2">
+        <div className="col-span-4 p-4 bg-secondary border-r-2 rounded-md">
           <div className="flex font-extrabold mb-2">{summary.label}</div>
           <div className="flex w-full">{summary.content}</div>
         </div>
@@ -72,7 +74,8 @@ export default function VerticalSteps({
         )}
         {currentStep === steps.length - 1 && (
           <button className="btn btn-sm btn-primary" onClick={() => onSubmit()}>
-            Create Deal
+            {isSubmitButtonLoading && <span className="loading loading-spinner"></span>}
+            {isSubmitButtonLoading ? "Creating deal ..." : "Create Deal"}
           </button>
         )}
       </div>
