@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useAccount, useNetwork } from "wagmi";
 import VerticalSteps from "~~/components/VerticalSteps";
 import DealSummary from "~~/components/deal/DealSummary";
 import GeneralDetails from "~~/components/deal/GeneralDetails";
 import RoundDetails from "~~/components/deal/RoundDetails";
 import TradingDetails from "~~/components/deal/TradingDetails";
+import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 import { formatCurrency } from "~~/utils";
 
 export default function CreateDeal() {
@@ -13,6 +15,12 @@ export default function CreateDeal() {
     roundDetails: {},
     tradingDetails: {},
   });
+  const [isLoadingCreateDealButton, setIsLoadingCreateDealButton] = useState(false);
+  const { chain } = useNetwork();
+  const { address: ownerAddress } = useAccount();
+  const { data: baseTokenData } = useDeployedContractInfo("USDT");
+  const { data: tradingWalletData } = useDeployedContractInfo("TradingWallet");
+  const { data: executorManagerData } = useDeployedContractInfo("ExecutorManager");
 
   function handleNext() {
     setCurrentStep(step => step + 1);
@@ -24,12 +32,24 @@ export default function CreateDeal() {
 
   const onSubmit = () => {
     console.log("Submit clicked: allStepsData => ", allStepsData);
+    setIsLoadingCreateDealButton(true);
+    /**
+     * TODO: Remove insecure usage of passing contract addresses
+     */
     fetch("/api/deal/create", {
       method: "POST",
-      body: JSON.stringify(allStepsData),
+      body: JSON.stringify({
+        ...allStepsData,
+        chainId: chain?.id,
+        baseToken: baseTokenData?.address,
+        tradingWallet: tradingWalletData?.address,
+        ownerAddress,
+        executorManager: executorManagerData?.address,
+      }),
     })
       .then(response => response.json())
-      .catch(err => console.log(err));
+      .catch(err => console.log(err))
+      .finally(() => setIsLoadingCreateDealButton(false));
   };
 
   const onJumpToStep = (step: number) => {
@@ -78,6 +98,7 @@ export default function CreateDeal() {
           label: "Deal Summary",
           content: <DealSummary initialOTCMarketcap={initialOTCMarketcap} roundFdv={roundFdv} otcFdv={otcFdv} />,
         }}
+        isSubmitButtonLoading={isLoadingCreateDealButton}
       />
     </div>
   );

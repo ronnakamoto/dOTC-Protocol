@@ -31,3 +31,45 @@ export function formatCurrency(amount: any) {
   // Return the formatted string
   return `${dividedAmount}${suffix}`;
 }
+
+export function selectRpcProvider(chainId: number) {
+  let rpcProviderKey = "RPC_";
+  switch (chainId) {
+    case 56: {
+      rpcProviderKey += "BNB_SMARTCHAIN_MAINNET";
+      break;
+    }
+    case 137: {
+      rpcProviderKey += "POLYGON_MAINNET";
+      break;
+    }
+    case 122: {
+      rpcProviderKey += "FUSE_MAINNET";
+      break;
+    }
+    case 42161: {
+      rpcProviderKey += "ARBITRUM_ONE";
+      break;
+    }
+    case 43114: {
+      rpcProviderKey += "AVALANCHE_C_CHAIN";
+      break;
+    }
+    case 8453: {
+      rpcProviderKey += "BASE";
+      break;
+    }
+    case 43113: {
+      rpcProviderKey += "AVALANCHE_FUJI_TESTNET";
+      break;
+    }
+    case 80001: {
+      rpcProviderKey += "MUMBAI";
+      break;
+    }
+    default:
+      throw new Error("Unknown network");
+  }
+
+  return process.env[rpcProviderKey];
+}

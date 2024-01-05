@@ -19,12 +19,14 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     You can run the `yarn account` command to check your balance in every network.
   */
   const { deployer } = await hre.getNamedAccounts();
-  const { deploy } = hre.deployments;
+  const { deploy, get } = hre.deployments;
+
+  const executorManager = await get("ExecutorManager");
 
   const result = await deploy("TradingWallet", {
     from: deployer,
     // Contract constructor arguments
-    args: [],
+    args: [executorManager.address],
     log: true,
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.

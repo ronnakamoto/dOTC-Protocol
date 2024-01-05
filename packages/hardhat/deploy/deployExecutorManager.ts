@@ -21,21 +21,21 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  const result = await deploy("DOTCBundlerService", {
+  const result = await deploy("ExecutorManager", {
     from: deployer,
     // Contract constructor arguments
-    args: [865, "0xA9d587a00A31A52Ed70D6026794a8FC5E2F5dCb0"],
+    args: [],
     log: true,
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
 
-  console.log("DOTCBundlerService Deployed to ", result.address);
+  console.log("ExecutorManager Deployed to ", result.address);
 };
 
 export default deployYourContract;
 
 // Tags are useful if you have multiple deploy files and only want to run one of them.
 // e.g. yarn deploy --tags YourContract
-deployYourContract.tags = ["DOTCBundlerService"];
+deployYourContract.tags = ["ExecutorManager"];
