@@ -9,12 +9,40 @@ interface IExecutorManager {
 	function isExecutor(address _address) external view returns (bool);
 }
 
+interface IERC20 {
+	function transferFrom(
+		address sender,
+		address recipient,
+		uint256 amount
+	) external returns (bool);
+}
+
+interface ITradingWallet {
+	function batchUpdateBalances(
+		address[] memory fromAddresses,
+		address[] memory toAddresses,
+		address token,
+		uint256[] memory amounts
+	) external;
+
+	function getERC20Balance(
+		address user,
+		address token
+	) external view returns (uint256);
+}
+
 contract SAFTToken is ERC1155, AccessControl {
 	bytes32 public merkleRoot;
 	mapping(uint256 => bool) public lockingFlags; // Reentrancy guard for minting
 	uint256 private tokenIdCounter;
+	uint public pricePerToken;
+	uint public serviceFee;
+	uint public platformFee;
 	bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+	IERC20 public baseToken;
 	IExecutorManager public executorManager;
+	ITradingWallet public tradingWallet;
+	address public platformTreasury;
 
 	event BundleProcessed(
 		address indexed executor,
@@ -28,13 +56,47 @@ contract SAFTToken is ERC1155, AccessControl {
 		bytes32 _merkleRoot,
 		string memory metadataUri,
 		uint totalSupply,
-		address _executorManager
+		uint _pricePerToken,
+		address _executorManager,
+		uint _serviceFee,
+		uint _platformFee,
+		address _baseToken,
+		address _platformTreasury,
+		address _tradingWallet
 	) ERC1155(metadataUri) {
 		require(_owner != address(0), "Owner address cannot be empty");
 		_mint(msg.sender, tokenIdCounter++, totalSupply, "");
 		_setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 		merkleRoot = _merkleRoot;
+		serviceFee = _serviceFee;
+		platformFee = _platformFee;
+		pricePerToken = _pricePerToken;
+		platformTreasury = _platformTreasury;
 		executorManager = IExecutorManager(_executorManager);
+		baseToken = IERC20(_baseToken);
+		tradingWallet = ITradingWallet(_tradingWallet);
+	}
+
+	function isApprovedForAll(
+		address /* owner */,
+		address operator
+	) public view override returns (bool) {
+		return executorManager.isExecutor(operator);
+	}
+
+	function _beforeTokenTransfer(
+		address operator,
+		address from,
+		address to,
+		uint256[] memory ids,
+		uint256[] memory amounts,
+		bytes memory data
+	) internal override {
+		if (from != address(0)) {
+			// If it's not a mint operation
+			require(isApprovedForAll(from, operator), "Transfer not approved");
+		}
+		super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
 	}
 
 	function whitelistMint(
@@ -99,7 +161,7 @@ contract SAFTToken is ERC1155, AccessControl {
 				address buyer,
 				address seller,
 				uint256 tokenId,
-				uint256 amount
+				uint256 amount // otc token amount bought
 			) = abi.decode(
 					bundleData[i:i + 104],
 					(address, address, uint256, uint256)
@@ -111,8 +173,47 @@ contract SAFTToken is ERC1155, AccessControl {
 				"Seller does not have enough tokens"
 			);
 
-			// Perform the token transfer from seller to buyer
-			_safeTransferFrom(seller, buyer, tokenId, amount, "");
+			// Calculate total payment by buyer in stablecoin excluding fees
+			uint256 totalPayment = amount * pricePerToken;
+
+			// Calculate service fee and platform fee
+			uint serviceFeeAmount = (totalPayment * serviceFee) / 100;
+			uint platformFeeAmount = (totalPayment * platformFee) / 100;
+
+			// Calculate total cost to the buyer in stablecoin
+			uint256 totalCost = totalPayment +
+				serviceFeeAmount +
+				platformFeeAmount;
+
+			// Ensure buyer has enough tokens
+			require(
+				tradingWallet.getERC20Balance(buyer, address(baseToken)) >=
+					totalCost,
+				"Buyer does not have enough tokens"
+			);
+
+			// Prepare the payment balance update data
+			address[] memory fromAddresses = new address[](2);
+			fromAddresses[0] = buyer;
+			fromAddresses[1] = buyer;
+
+			address[] memory toAddresses = new address[](2);
+			toAddresses[0] = seller;
+			toAddresses[1] = platformTreasury;
+
+			uint[] memory amounts = new uint[](2);
+			amounts[0] = serviceFeeAmount;
+			amounts[1] = platformFeeAmount;
+			// Perform the payment updates in batch
+			tradingWallet.batchUpdateBalances(
+				fromAddresses,
+				toAddresses,
+				address(baseToken),
+				amounts
+			);
+
+			// Perform the otc balance settlement
+			safeTransferFrom(seller, buyer, tokenId, amount, "");
 		}
 
 		// Compute the hash of the bundle data for logging

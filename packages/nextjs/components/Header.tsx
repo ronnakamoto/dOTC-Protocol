@@ -19,7 +19,7 @@ export const menuLinks: HeaderMenuLink[] = [
   },
   {
     label: "Deals",
-    href: "/vc/list-saft",
+    href: "/deal",
     icon: <NewspaperIcon className="h-4 w-4" />,
   },
   {
