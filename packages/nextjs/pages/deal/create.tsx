@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { pickProperties } from "../../utils";
 import { useAccount, useNetwork } from "wagmi";
+import { ShareIcon } from "@heroicons/react/24/outline";
+import Summary from "~~/components/Summary";
 import VerticalSteps from "~~/components/VerticalSteps";
 import DealSummary from "~~/components/deal/DealSummary";
 import GeneralDetails from "~~/components/deal/GeneralDetails";
@@ -21,6 +24,8 @@ export default function CreateDeal() {
   const { data: baseTokenData } = useDeployedContractInfo("USDT");
   const { data: tradingWalletData } = useDeployedContractInfo("TradingWallet");
   const { data: executorManagerData } = useDeployedContractInfo("ExecutorManager");
+  // Array of objects suited for summary component
+  const [dealCreated, setDealCreated] = useState<any[]>([]);
 
   function handleNext() {
     setCurrentStep(step => step + 1);
@@ -48,6 +53,17 @@ export default function CreateDeal() {
       }),
     })
       .then(response => response.json())
+      .then(data => {
+        console.log("reponse data: ", data);
+        const formattedData = pickProperties(
+          {
+            ...allStepsData.generalDetails,
+            ...allStepsData.tradingDetails,
+          },
+          [{ field: "projectName" }, { field: "projectSymbol" }, { field: "pricePerToken" }, { field: "tokensToSell" }],
+        );
+        setDealCreated(formattedData);
+      })
       .catch(err => console.log(err))
       .finally(() => setIsLoadingCreateDealButton(false));
   };
@@ -85,21 +101,34 @@ export default function CreateDeal() {
     (allStepsData.roundDetails?.roundFdv ?? 0) *
     (parseFloat(allStepsData.tradingDetails?.pricePerToken ?? 0) / allStepsData.roundDetails?.roundPricePerToken);
   const otcFdv = formatCurrency(isNaN(unFormattedOtcFdv) ? 0 : unFormattedOtcFdv);
+
   return (
     <div className="flex m-4">
-      <VerticalSteps
-        steps={steps}
-        currentStep={currentStep}
-        onNext={handleNext}
-        onPrev={handlePrev}
-        onSubmit={onSubmit}
-        onJumpToStep={onJumpToStep}
-        summary={{
-          label: "Deal Summary",
-          content: <DealSummary initialOTCMarketcap={initialOTCMarketcap} roundFdv={roundFdv} otcFdv={otcFdv} />,
-        }}
-        isSubmitButtonLoading={isLoadingCreateDealButton}
-      />
+      {dealCreated?.length ? (
+        <Summary
+          heading="Deal Successfully Created"
+          Icon={ShareIcon}
+          data={dealCreated}
+          primaryButtonHref="/trade"
+          primaryButtonText="Open Link to Share Deal"
+          secondaryButtonHref="/deal"
+          secondaryButtonText="View All Deals"
+        />
+      ) : (
+        <VerticalSteps
+          steps={steps}
+          currentStep={currentStep}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onSubmit={onSubmit}
+          onJumpToStep={onJumpToStep}
+          summary={{
+            label: "Deal Summary",
+            content: <DealSummary initialOTCMarketcap={initialOTCMarketcap} roundFdv={roundFdv} otcFdv={otcFdv} />,
+          }}
+          isSubmitButtonLoading={isLoadingCreateDealButton}
+        />
+      )}
     </div>
   );
 }
