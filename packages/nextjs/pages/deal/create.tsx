@@ -10,6 +10,7 @@ import RoundDetails from "~~/components/deal/RoundDetails";
 import TradingDetails from "~~/components/deal/TradingDetails";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 import { formatCurrency } from "~~/utils";
+import { notification } from "~~/utils/scaffold-eth";
 
 export default function CreateDeal() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -26,6 +27,7 @@ export default function CreateDeal() {
   const { data: executorManagerData } = useDeployedContractInfo("ExecutorManager");
   // Array of objects suited for summary component
   const [dealCreated, setDealCreated] = useState<any[]>([]);
+  const [dealContractAddress, setDealContractAddress] = useState("");
 
   function handleNext() {
     setCurrentStep(step => step + 1);
@@ -59,12 +61,23 @@ export default function CreateDeal() {
           {
             ...allStepsData.generalDetails,
             ...allStepsData.tradingDetails,
+            ...data,
           },
-          [{ field: "projectName" }, { field: "projectSymbol" }, { field: "pricePerToken" }, { field: "tokensToSell" }],
+          [
+            { field: "projectName" },
+            { field: "projectSymbol" },
+            { field: "pricePerToken" },
+            { field: "tokensToSell" },
+            { field: "contractAddress" },
+          ],
         );
         setDealCreated(formattedData);
+        setDealContractAddress(data?.contractAddress);
       })
-      .catch(err => console.log(err))
+      .catch(err => {
+        console.log(err);
+        notification.error("Failed to create the deal");
+      })
       .finally(() => setIsLoadingCreateDealButton(false));
   };
 
@@ -109,7 +122,7 @@ export default function CreateDeal() {
           heading="Deal Successfully Created"
           Icon={ShareIcon}
           data={dealCreated}
-          primaryButtonHref="/trade"
+          primaryButtonHref={`/trade/${dealContractAddress}`}
           primaryButtonText="Open Link to Share Deal"
           secondaryButtonHref="/deal"
           secondaryButtonText="View All Deals"
