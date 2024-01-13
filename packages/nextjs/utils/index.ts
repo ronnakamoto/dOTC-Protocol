@@ -73,3 +73,26 @@ export function selectRpcProvider(chainId: number) {
 
   return process.env[rpcProviderKey];
 }
+
+export function camelToSentenceCase(str: string): string {
+  return str
+    .replace(/([A-Z])/g, " $1") // insert a space before all capital letters
+    .replace(/^./, str => str.toUpperCase()); // capitalize the first letter
+}
+
+export type PropertyPicker<T> = {
+  title?: string;
+  field: keyof T;
+};
+
+export type KeyValue = {
+  key: string;
+  value: any;
+};
+
+export function pickProperties<T>(obj: T, propertiesToPick: PropertyPicker<T>[]): KeyValue[] {
+  return propertiesToPick.map(({ title, field }) => ({
+    key: title ?? camelToSentenceCase(String(field)),
+    value: obj[field],
+  }));
+}
